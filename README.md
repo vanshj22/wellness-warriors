@@ -204,10 +204,6 @@ For better performance:
 2. Ensure good lighting for pose detection
 3. Close other resource-intensive applications
 
-## Credits
-
-This project's pose detection is inspired by the [Posture project](https://github.com/twixupmysleeve/Posture) which demonstrates real-time pose analysis using MediaPipe.
-
 ## License
 
 MIT License - feel free to use this project for your own purposes.
