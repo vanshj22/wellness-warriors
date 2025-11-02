@@ -1,10 +1,9 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Menu, Bell, Plus, Search, User, LogOut, Settings } from "lucide-react";
+import { Bell, Plus, Search, User, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface EmployeeTopNavProps {
-  onMenuClick: () => void;
   onNotificationClick: () => void;
   onProfileClick: () => void;
   activePatientCount: number;
@@ -13,7 +12,6 @@ interface EmployeeTopNavProps {
 }
 
 export function EmployeeTopNav({
-  onMenuClick,
   onNotificationClick,
   onProfileClick,
   activePatientCount,
@@ -53,25 +51,17 @@ export function EmployeeTopNav({
   });
 
   return (
-    <div className="h-[72px] bg-white border-b border-gray-200 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-50">
+    <div className="h-[72px] bg-white/95 backdrop-blur-md border-b border-gray-200/60 flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-50 shadow-sm">
       {/* Left Side */}
       <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onMenuClick}
-          className="w-10 h-10"
-        >
-          <Menu className="w-6 h-6" />
-        </Button>
-        <div className="text-xl font-bold text-gray-900">Wellness Warriors</div>
+        <div className="text-xl font-bold text-gray-900 tracking-tight">Wellness Warriors</div>
       </div>
 
       {/* Center - Date/Time */}
       <div className="flex items-center gap-6">
         <div className="text-center">
-          <div className="text-sm font-semibold text-gray-900">{currentDate}</div>
-          <div className="text-xs text-gray-600">{currentTime}</div>
+          <div className="text-sm font-medium text-gray-700">{new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</div>
+          <div className="text-xs text-gray-500">{currentTime}</div>
         </div>
       </div>
 

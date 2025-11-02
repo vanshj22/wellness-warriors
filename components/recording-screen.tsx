@@ -1,6 +1,6 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, X, CheckCircle, Volume2, Activity } from "lucide-react";
+import { Camera, X, CheckCircle, Volume2, Activity, AlertTriangle } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,6 +19,7 @@ export function RecordingScreen({ onBack, onComplete, exerciseType: propExercise
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
+  const [showPainAlert, setShowPainAlert] = useState(false);
   const [poseDetectionEnabled, setPoseDetectionEnabled] = useState(true);
   const [exerciseType, setExerciseType] = useState<"auto" | "squat" | "pushup">(propExerciseType || "auto");
   
@@ -347,6 +348,36 @@ export function RecordingScreen({ onBack, onComplete, exerciseType: propExercise
     // Rep count will reset automatically when recording starts again
   };
 
+  const handleExcessivePain = () => {
+    // Stop the recording immediately
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+    
+    // Show the pain alert dialog
+    setShowPainAlert(true);
+    
+    // Here you would typically send an alert to the backend/physio
+    // For now, we'll just log it
+    console.log("🚨 EXCESSIVE PAIN ALERT: User stopped exercise due to excessive pain");
+    
+    // Speak the message
+    speak("Exercise stopped. Your physiotherapist has been alerted and will contact you as soon as possible.", {
+      rate: 1.0,
+      pitch: 1.0,
+      volume: 1.0
+    });
+  };
+
+  const handlePainAlertClose = () => {
+    setShowPainAlert(false);
+    // Navigate back after showing the alert
+    setTimeout(() => {
+      onBack();
+    }, 500);
+  };
+
   // Handle countdown completion
   useEffect(() => {
     // Only start recording if countdown was actually running (went from a number to null)
@@ -529,14 +560,26 @@ export function RecordingScreen({ onBack, onComplete, exerciseType: propExercise
               </div>
             </>
           ) : isRecording ? (
-            <Button
-              onClick={stopRecording}
-              size="lg"
-              className="w-full h-16 text-xl font-bold bg-red-600 hover:bg-red-700 text-white shadow-lg"
-            >
-              <Camera className="mr-3 w-7 h-7" />
-              Stop Recording
-            </Button>
+            <>
+              {/* Excessive Pain Stop Button - Prominent below Stop Recording */}
+              <Button
+                onClick={handleExcessivePain}
+                size="lg"
+                className="w-full h-14 text-lg font-bold bg-red-600/90 hover:bg-red-700 text-white border-2 border-red-400/50 shadow-lg"
+                title="Stop if experiencing excessive pain"
+              >
+                <AlertTriangle className="mr-2 w-6 h-6" />
+                Stop Exercise - Excessive Pain
+              </Button>
+              <Button
+                onClick={stopRecording}
+                size="lg"
+                className="w-full h-16 text-xl font-bold bg-gray-700 hover:bg-gray-600 text-white shadow-lg"
+              >
+                <Camera className="mr-3 w-7 h-7" />
+                Stop Recording
+              </Button>
+            </>
           ) : (
             <Button
               onClick={startCountdown}
@@ -604,6 +647,51 @@ export function RecordingScreen({ onBack, onComplete, exerciseType: propExercise
                   className="w-full mt-4 h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600"
                 >
                   Got It
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Excessive Pain Alert Dialog */}
+      <AnimatePresence>
+        {showPainAlert && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/80 flex items-center justify-center z-[100] p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl"
+            >
+              <div className="text-center space-y-6">
+                <div className="flex justify-center">
+                  <div className="bg-red-100 rounded-full p-4">
+                    <AlertTriangle className="w-12 h-12 text-red-600" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Exercise Stopped
+                  </h2>
+                  <p className="text-base text-gray-700 leading-relaxed">
+                    Your exercise has been stopped. Your physiotherapist has been <strong>alerted</strong> about your excessive pain and will get back to you <strong>as soon as possible</strong>.
+                  </p>
+                  <p className="text-sm text-gray-500 mt-4">
+                    Please rest and avoid any activities that cause pain.
+                  </p>
+                </div>
+                <Button
+                  onClick={handlePainAlertClose}
+                  size="lg"
+                  className="w-full mt-6 h-12 text-base font-semibold bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white"
+                >
+                  Understood
                 </Button>
               </div>
             </motion.div>

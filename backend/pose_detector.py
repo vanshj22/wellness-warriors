@@ -155,7 +155,7 @@ class PoseDetector:
             elif avg_knee_angle > self.down_threshold:
                 feedback.append({
                     "type": "warning",
-                    "message": f"Go deeper! (Current: {int(avg_knee_angle)}°)"
+                    "message": "Go deeper - bend your knees more"
                 })
             elif avg_knee_angle >= 80 and avg_knee_angle <= self.down_threshold:
                 feedback.append({
@@ -249,7 +249,7 @@ class PoseDetector:
             elif elbow_angle > 100:
                 feedback.append({
                     "type": "warning",
-                    "message": "Go lower! Aim for 90 degrees"
+                    "message": "Go lower - bend your arms more"
                 })
             elif elbow_angle >= 70 and elbow_angle <= 100:
                 feedback.append({

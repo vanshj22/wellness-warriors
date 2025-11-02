@@ -39,7 +39,6 @@ export function EmployeeDashboard({ onLogout }: EmployeeDashboardProps) {
   return (
     <div className="w-full h-screen flex flex-col bg-gray-50 overflow-hidden">
       <EmployeeTopNav
-        onMenuClick={() => {}}
         onNotificationClick={() => {}}
         onProfileClick={() => setCurrentView("settings")}
         activePatientCount={12}

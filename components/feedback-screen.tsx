@@ -132,7 +132,7 @@ export function FeedbackScreen({ onBack }: FeedbackScreenProps) {
               <p className="text-gray-600 text-lg">How difficult were the exercises this week?</p>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {[
                 { value: "very-easy", label: "Very Easy", emoji: "😊", color: "bg-green-500" },
                 { value: "easy", label: "Easy", emoji: "🙂", color: "bg-green-400" },
@@ -144,17 +144,17 @@ export function FeedbackScreen({ onBack }: FeedbackScreenProps) {
                   key={option.value}
                   onClick={() => updateFormData("difficulty", option.value)}
                   whileTap={{ scale: 0.98 }}
-                  className={`w-full p-5 rounded-xl border-2 transition-all ${
+                  className={`w-full p-3 rounded-lg border-2 transition-all ${
                     formData.difficulty === option.value
-                      ? `border-blue-500 ${option.color} text-white shadow-lg`
+                      ? `border-blue-500 ${option.color} text-white shadow-md`
                       : "border-gray-200 bg-white hover:border-gray-300"
                   }`}
                 >
-                  <div className="flex items-center gap-4">
-                    <span className="text-3xl">{option.emoji}</span>
-                    <span className="text-xl font-semibold flex-1 text-left">{option.label}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">{option.emoji}</span>
+                    <span className="text-base font-medium flex-1 text-left">{option.label}</span>
                     {formData.difficulty === option.value && (
-                      <CheckCircle className="w-6 h-6" />
+                      <CheckCircle className="w-4 h-4" />
                     )}
                   </div>
                 </motion.button>
@@ -179,7 +179,7 @@ export function FeedbackScreen({ onBack }: FeedbackScreenProps) {
               <p className="text-gray-600 text-lg">Select all that apply</p>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {[
                 { value: "during", label: "During exercises", emoji: "💪" },
                 { value: "after", label: "After exercises", emoji: "😴" },
@@ -192,17 +192,17 @@ export function FeedbackScreen({ onBack }: FeedbackScreenProps) {
                   key={option.value}
                   onClick={() => togglePainTiming(option.value)}
                   whileTap={{ scale: 0.98 }}
-                  className={`w-full p-5 rounded-xl border-2 transition-all ${
+                  className={`w-full p-3 rounded-lg border-2 transition-all ${
                     formData.painTiming.includes(option.value)
-                      ? "border-blue-500 bg-blue-500 text-white shadow-lg"
+                      ? "border-blue-500 bg-blue-500 text-white shadow-md"
                       : "border-gray-200 bg-white hover:border-gray-300"
                   }`}
                 >
-                  <div className="flex items-center gap-4">
-                    <span className="text-2xl">{option.emoji}</span>
-                    <span className="text-lg font-semibold flex-1 text-left">{option.label}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">{option.emoji}</span>
+                    <span className="text-base font-medium flex-1 text-left">{option.label}</span>
                     {formData.painTiming.includes(option.value) && (
-                      <CheckCircle className="w-6 h-6" />
+                      <CheckCircle className="w-4 h-4" />
                     )}
                   </div>
                 </motion.button>
@@ -231,8 +231,6 @@ export function FeedbackScreen({ onBack }: FeedbackScreenProps) {
           <h2 className="text-4xl font-bold text-gray-900 mb-4">Thank You!</h2>
           <p className="text-xl text-gray-600 mb-8">
             Your feedback has been submitted successfully.
-            <br />
-            Your physiotherapist will review it and adjust your program accordingly.
           </p>
           <Button
             onClick={onBack}
