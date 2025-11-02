@@ -199,256 +199,124 @@ export function ExercisesScreen({
         width: "100%",
         height: "100%",
         minHeight: "100%",
-        background: "linear-gradient(135deg, #012a4a 0%, #01497c 50%, #2a6f97 100%)",
+        background: "#ffffff",
         pb: 10,
         overflowY: "auto",
         "&::-webkit-scrollbar": {
-          display: "none !important", // Chrome, Safari, Opera
+          display: "none !important",
         },
       }}
       style={{
-        scrollbarWidth: "none", // Firefox
-        msOverflowStyle: "none", // IE and Edge
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
       } as React.CSSProperties}
     >
-      <Container maxWidth="sm" sx={{ py: 4 }}>
+      <Container maxWidth="sm" sx={{ py: 3, px: 3 }}>
         {/* Header */}
-        <Fade in timeout={600}>
-          <Box sx={{ mb: 3, position: "relative" }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
-              <Button
-                onClick={onBack}
-                sx={{
-                  color: "white",
-                  "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
-                }}
-              >
-                ← Back
-              </Button>
-              <IconButton
-                onClick={narrateScreen}
-                sx={{
-                  color: "white",
-                  backgroundColor: "rgba(255,255,255,0.15)",
-                  backdropFilter: "blur(10px)",
-                  border: "1.5px solid rgba(255,255,255,0.3)",
-                  "&:hover": {
-                    backgroundColor: "rgba(255,255,255,0.25)",
-                    borderColor: "rgba(255,255,255,0.5)",
-                    transform: "scale(1.05)",
-                  },
-                  transition: "all 0.3s ease",
-                }}
-                aria-label="Narrate screen content"
-                title="Narrate screen content"
-                size="small"
-              >
-                <VolumeUp sx={{ fontSize: 20 }} />
-              </IconButton>
-            </Box>
-            <Typography
-              variant="h3"
-              sx={{
-                fontWeight: 800,
-                color: "white",
-                mb: 1,
-                textShadow: "0 2px 8px rgba(0,0,0,0.2)",
-              }}
-            >
-              My Exercises
-            </Typography>
-            <Typography
-              variant="h6"
-              sx={{
-                color: "rgba(255,255,255,0.9)",
-                fontWeight: 400,
-              }}
-            >
-              Record and check your form
-            </Typography>
-          </Box>
-        </Fade>
-
-        {/* Prescribed Exercises */}
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
-            <Chip
-              label="Your Prescribed Exercises"
-              sx={{
-                backgroundColor: "rgba(255,255,255,0.2)",
-                color: "white",
-                fontWeight: 600,
-                fontSize: "0.875rem",
-              }}
-            />
-          </Box>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {prescribedExercises.map((exercise, index) => {
-              const Icon = exercise.icon;
-              return (
-                <motion.div
-                  key={exercise.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1, duration: 0.5 }}
-                >
-                  <Card
-                    onClick={() => handleExerciseSelect(exercise)}
-                    sx={{
-                      cursor: "pointer",
-                      background: "white",
-                      position: "relative",
-                      overflow: "hidden",
-                      "&::before": {
-                        content: '""',
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: 4,
-                        background: exercise.gradient,
-                      },
-                      "&:hover": {
-                        transform: "translateY(-4px)",
-                        boxShadow: "0 12px 32px rgba(0,0,0,0.15)",
-                      },
-                      transition: "all 0.3s ease",
-                    }}
-                  >
-                    <CardContent sx={{ p: 2.5 }}>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 2 }}
-                      >
-                        <Box
-                          sx={{
-                            p: 2,
-                            borderRadius: 3,
-                            background: exercise.gradient,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            minWidth: 64,
-                            height: 64,
-                          }}
-                        >
-                          <Icon sx={{ fontSize: 32, color: "white" }} />
-                        </Box>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography
-                            variant="h6"
-                            sx={{
-                              fontWeight: 700,
-                              color: "text.primary",
-                              mb: 0.5,
-                            }}
-                          >
-                            {exercise.name}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{ color: "text.secondary", mb: 0.5 }}
-                          >
-                            {exercise.description}
-                          </Typography>
-                          {exercise.frequency && (
-                            <Chip
-                              label={exercise.frequency}
-                              size="small"
-                              sx={{
-                                backgroundColor: `${exercise.color}15`,
-                                color: exercise.color,
-                                fontWeight: 600,
-                                fontSize: "0.75rem",
-                                height: 22,
-                              }}
-                            />
-                          )}
-                        </Box>
-                        <ArrowForward sx={{ color: "text.secondary" }} />
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </Box>
+        <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Button
+            onClick={onBack}
+            sx={{
+              color: "#1a1a1a",
+              textTransform: "none",
+              fontWeight: 500,
+              minWidth: "auto",
+              px: 1,
+              "&:hover": { backgroundColor: "rgba(0,0,0,0.05)" },
+            }}
+          >
+            ← Back
+          </Button>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              color: "#1a1a1a",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Exercises
+          </Typography>
+          <Box sx={{ width: 64 }} /> {/* Spacer for centering */}
         </Box>
-
-        {/* Exercise Tips */}
-        <Box sx={{ mb: 3 }}>
-          <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
-            <Chip
-              label="Exercise Tips"
-              sx={{
-                backgroundColor: "rgba(255,255,255,0.2)",
-                color: "white",
-                fontWeight: 600,
-                fontSize: "0.875rem",
-              }}
-            />
-          </Box>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {exerciseTips.map((tipItem, index) => {
-              const Icon = tipItem.icon;
-              return (
-                <motion.div
-                  key={tipItem.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1, duration: 0.4 }}
+        
+        {/* Exercise List - Hevy Style */}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {prescribedExercises.map((exercise, index) => {
+            const Icon = exercise.icon;
+            return (
+              <motion.div
+                key={exercise.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.2 }}
+              >
+                <Button
+                  onClick={() => handleExerciseSelect(exercise)}
+                  fullWidth
+                  sx={{
+                    cursor: "pointer",
+                    background: "#ffffff",
+                    color: "#1a1a1a",
+                    borderRadius: 2,
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+                    border: "1px solid #e0e0e0",
+                    textTransform: "none",
+                    justifyContent: "flex-start",
+                    px: 2.5,
+                    py: 2.5,
+                    minHeight: 80,
+                    "&:hover": {
+                      backgroundColor: "#f9f9f9",
+                      boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                      borderColor: "#d0d0d0",
+                    },
+                    transition: "all 0.2s ease",
+                  }}
                 >
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      p: 2.5,
-                      background: "white",
-                      borderRadius: 3,
-                      border: `2px solid ${tipItem.color}20`,
-                      "&:hover": {
-                        borderColor: `${tipItem.color}40`,
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-                      },
-                      transition: "all 0.3s ease",
-                    }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "start", gap: 2 }}>
-                      <Box
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, width: "100%" }}>
+                    <Box
+                      sx={{
+                        p: 1.5,
+                        borderRadius: 2,
+                        background: "#f5f5f5",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minWidth: 56,
+                        height: 56,
+                      }}
+                    >
+                      <Icon sx={{ fontSize: 28, color: "#1a1a1a" }} />
+                    </Box>
+                    <Box sx={{ flex: 1, textAlign: "left" }}>
+                      <Typography
+                        variant="body1"
                         sx={{
-                          p: 1.5,
-                          borderRadius: 2,
-                          backgroundColor: `${tipItem.color}15`,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          fontWeight: 600,
+                          color: "#1a1a1a",
+                          mb: 0.25,
                         }}
                       >
-                        <Icon sx={{ fontSize: 24, color: tipItem.color }} />
-                      </Box>
-                      <Box sx={{ flex: 1 }}>
+                        {exercise.name}
+                      </Typography>
+                      {exercise.frequency && (
                         <Typography
-                          variant="subtitle1"
-                          sx={{
-                            fontWeight: 700,
-                            color: "text.primary",
-                            mb: 0.5,
-                          }}
+                          variant="caption"
+                          sx={{ color: "#666666", fontSize: "0.75rem" }}
                         >
-                          {tipItem.title}
+                          {exercise.frequency}
                         </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ color: "text.secondary", lineHeight: 1.6 }}
-                        >
-                          {tipItem.tip}
-                        </Typography>
-                      </Box>
+                      )}
                     </Box>
-                  </Paper>
-                </motion.div>
-              );
-            })}
-          </Box>
+                    <ArrowForward sx={{ color: "#999999", fontSize: 20 }} />
+                  </Box>
+                </Button>
+              </motion.div>
+            );
+          })}
         </Box>
+
 
       </Container>
     </Box>

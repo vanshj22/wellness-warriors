@@ -5,6 +5,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { ProgressGraph } from "./progress-graph";
+import { Box } from "@mui/material";
 
 interface MeasurementsScreenProps {
   onBack: () => void;
@@ -102,6 +104,11 @@ export function MeasurementsScreen({ onBack }: MeasurementsScreenProps) {
               </div>
             </div>
           </Card>
+
+          {/* Progress Graph with Details */}
+          <Box sx={{ mt: 2 }}>
+            <ProgressGraph showDetail={true} />
+          </Box>
 
           {/* Achievement Card */}
           <Card className="p-6 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300">

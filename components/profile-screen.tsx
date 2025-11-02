@@ -11,12 +11,8 @@ import {
   Avatar,
 } from "@mui/material";
 import {
-  Person,
-  Settings,
-  Notifications,
   Logout,
   Chat,
-  EmojiEvents,
 } from "@mui/icons-material";
 
 interface ProfileScreenProps {
@@ -32,24 +28,6 @@ export function ProfileScreen({ onBack, onNavigate, onLogout }: ProfileScreenPro
       icon: Chat,
       gradient: "linear-gradient(135deg, #61a5c2 0%, #89c2d9 100%)",
       action: "feedback",
-    },
-    {
-      title: "My Account",
-      icon: Person,
-      gradient: "linear-gradient(135deg, #012a4a 0%, #01497c 100%)",
-      action: null,
-    },
-    {
-      title: "Settings",
-      icon: Settings,
-      gradient: "linear-gradient(135deg, #01497c 0%, #012a4a 100%)",
-      action: null,
-    },
-    {
-      title: "Notifications",
-      icon: Notifications,
-      gradient: "linear-gradient(135deg, #468faf 0%, #61a5c2 100%)",
-      action: null,
     },
     {
       title: "Sign Out",

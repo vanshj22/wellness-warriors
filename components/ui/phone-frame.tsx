@@ -29,9 +29,21 @@ export const PhoneFrame = ({ children, className }: PhoneFrameProps) => {
             {/* Status Bar Area */}
             <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-gray-800/20 to-transparent z-10 flex items-center justify-between px-8 pt-2">
               <div className="text-white text-xs font-semibold">9:41</div>
-              <div className="flex gap-1">
-                <div className="w-[17px] h-[10px] border border-white rounded-sm" />
-                <div className="w-[15px] h-[6px] bg-white rounded-sm" />
+              <div className="flex items-center gap-2">
+                {/* Signal bars */}
+                <div className="flex items-end gap-0.5">
+                  <div className="w-[3px] h-[4px] bg-white rounded-t" />
+                  <div className="w-[3px] h-[6px] bg-white rounded-t" />
+                  <div className="w-[3px] h-[8px] bg-white rounded-t" />
+                  <div className="w-[3px] h-[10px] bg-white rounded-t" />
+                </div>
+                {/* Battery */}
+                <div className="flex items-center gap-0.5">
+                  <div className="w-[22px] h-[11px] border border-white rounded-sm">
+                    <div className="w-[16px] h-[7px] bg-white rounded-sm m-[2px]" />
+                  </div>
+                  <div className="w-[2px] h-[6px] bg-white rounded-r" />
+                </div>
               </div>
             </div>
 

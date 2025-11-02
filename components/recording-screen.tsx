@@ -45,14 +45,31 @@ export function RecordingScreen({ onBack, onComplete, exerciseType: propExercise
   
   // Store rep count with video data
   const repCountRef = useRef<number>(0);
+  const lastRepCountRef = useRef<number>(0);
+  
   useEffect(() => {
     repCountRef.current = repCount;
-  }, [repCount]);
+    
+    // Provide encouragement at milestones
+    if (repCount > lastRepCountRef.current && isRecording) {
+      // Rep increased, provide milestone encouragement
+      if (repCount === 4) {
+        speak("Good job! Four reps completed. Keep it up!", { rate: 1.0, pitch: 1.1, volume: 1.0 });
+      } else if (repCount === 10) {
+        speak("Excellent work! Ten reps! You're doing great!", { rate: 1.0, pitch: 1.1, volume: 1.0 });
+      } else if (repCount % 5 === 0 && repCount > 10) {
+        speak(`Amazing! ${repCount} reps completed!`, { rate: 1.0, pitch: 1.1, volume: 1.0 });
+      }
+      lastRepCountRef.current = repCount;
+    }
+  }, [repCount, isRecording, speak]);
 
-  // Voice feedback for posture issues
+  // Voice feedback for posture issues and encouragement
   const lastSpokenMessageRef = useRef<string>("");
   const lastSpokenTimeRef = useRef<number>(0);
+  const lastEncouragementTimeRef = useRef<number>(0);
   const VOICE_FEEDBACK_THROTTLE_MS = 3000; // Minimum 3 seconds between voice feedbacks
+  const ENCOURAGEMENT_INTERVAL_MS = 10000; // Encourage every 10 seconds
 
   useEffect(() => {
     // Only provide voice feedback when recording and pose detection is enabled
@@ -60,14 +77,17 @@ export function RecordingScreen({ onBack, onComplete, exerciseType: propExercise
       return;
     }
 
-    // Find the most critical feedback (error > warning > others)
+    const now = Date.now();
+
+    // Find the most critical feedback (error > warning > good > others)
     const errorFeedback = feedback.find(f => f.type === "error");
     const warningFeedback = feedback.find(f => f.type === "warning");
+    const goodFeedback = feedback.filter(f => f.type === "good");
     
+    // Prioritize errors and warnings for correction
     const criticalFeedback = errorFeedback || warningFeedback;
     
     if (criticalFeedback) {
-      const now = Date.now();
       const message = criticalFeedback.message;
       
       // Throttle: Only speak if:
@@ -94,6 +114,27 @@ export function RecordingScreen({ onBack, onComplete, exerciseType: propExercise
           lastSpokenTimeRef.current = now;
         }
       }
+    } 
+    // If no errors/warnings and form is good, provide encouragement periodically
+    else if (goodFeedback.length >= 3 && (now - lastEncouragementTimeRef.current) >= ENCOURAGEMENT_INTERVAL_MS) {
+      const encouragements = [
+        "Great form! Keep it up!",
+        "Perfect technique! You're doing amazing!",
+        "Excellent form! Stay focused!",
+        "Outstanding! Your form is looking great!",
+        "Keep going! Your form is perfect!"
+      ];
+      
+      const randomEncouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
+      speak(randomEncouragement, { 
+        rate: 1.1, 
+        pitch: 1.1, // Higher pitch for positive feedback
+        volume: 1.0 
+      });
+      
+      lastEncouragementTimeRef.current = now;
+      lastSpokenMessageRef.current = randomEncouragement;
+      lastSpokenTimeRef.current = now;
     }
   }, [feedback, isRecording, poseDetectionEnabled, isSpeaking, showPreview, speak]);
 
@@ -433,7 +474,7 @@ export function RecordingScreen({ onBack, onComplete, exerciseType: propExercise
 
         {/* Real-time pose feedback */}
         {poseDetectionEnabled && feedback.length > 0 && !countdown && !showPreview && (
-          <div className="absolute top-28 right-4 bg-black/80 backdrop-blur-sm rounded-2xl p-4 max-w-xs space-y-2 pointer-events-auto">
+          <div className={`absolute ${isRecording ? 'top-52' : 'top-28'} right-4 bg-black/80 backdrop-blur-sm rounded-2xl p-4 max-w-xs space-y-2 pointer-events-auto transition-all duration-300`}>
             <div className="flex items-center gap-2 mb-2">
               <Activity className="w-5 h-5 text-blue-400" />
               <span className="text-white font-semibold text-sm">Live Feedback</span>
@@ -551,28 +592,18 @@ export function RecordingScreen({ onBack, onComplete, exerciseType: propExercise
               className="bg-white rounded-3xl p-8 max-w-sm w-full"
             >
               <div className="text-center space-y-4">
-                <div className="text-5xl mb-4">📋</div>
-                <h2 className="text-3xl font-bold text-gray-900">
-                  Get Ready!
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Get Ready
                 </h2>
-                <p className="text-lg text-gray-600 leading-relaxed mb-4">
-                  Stand in the frame. Make sure your whole body is visible. When ready, tap Start Recording.
+                <p className="text-base text-gray-600">
+                  Stand in frame. Tap Start when ready.
                 </p>
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-left">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Activity className="w-5 h-5 text-blue-600" />
-                    <span className="font-semibold text-blue-900">AI Pose Detection</span>
-                  </div>
-                  <p className="text-sm text-blue-800">
-                    Real-time feedback on your form will appear on screen. Toggle the pose detection button to turn it on/off.
-                  </p>
-                </div>
                 <Button
                   onClick={() => setShowInstructions(false)}
                   size="lg"
-                  className="w-full mt-6 h-14 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600"
+                  className="w-full mt-4 h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600"
                 >
-                  Got It!
+                  Got It
                 </Button>
               </div>
             </motion.div>

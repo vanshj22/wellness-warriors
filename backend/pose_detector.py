@@ -7,6 +7,7 @@ import mediapipe as mp
 import numpy as np
 from typing import List, Dict, Tuple, Optional
 import math
+import random
 
 
 class PoseDetector:
@@ -22,9 +23,12 @@ class PoseDetector:
         self.rep_count = 0
         self.is_down_position = False  # For squats: True when in down position
         self.last_knee_angle = 180  # Track knee angle for squat rep counting
-        self.down_threshold = 120  # Knee angle threshold for "down" position (more lenient)
-        self.up_threshold = 140  # Knee angle threshold for "up" position (more lenient)
+        self.down_threshold = 110  # Knee angle threshold for "down" position (stricter)
+        self.up_threshold = 155  # Knee angle threshold for "up" position (stricter)
         self.min_depth_reached = False  # Track if we've reached minimum depth
+        self.last_rep_time = 0  # Track time of last rep to prevent double counting
+        self.min_rep_interval = 0.5  # Minimum time between reps in seconds
+        self.frame_count = 0  # Track frames for timing
         print(f"PoseDetector initialized: down_threshold={self.down_threshold}, up_threshold={self.up_threshold}")
         
     def calculate_angle(self, a: Tuple[float, float], b: Tuple[float, float], c: Tuple[float, float]) -> float:
@@ -73,6 +77,10 @@ class PoseDetector:
             avg_knee_angle = (left_knee_angle + right_knee_angle) / 2
             avg_hip_angle = (left_hip_angle + right_hip_angle) / 2
             
+            # Increment frame count for timing
+            self.frame_count += 1
+            current_time = self.frame_count / 30.0  # Assume 30 fps
+            
             # Debug logging every 30 frames (about once per second)
             if not hasattr(self, 'frame_debug_count'):
                 self.frame_debug_count = 0
@@ -80,34 +88,55 @@ class PoseDetector:
             if self.frame_debug_count % 30 == 0:
                 print(f"[Squat] Angle: {avg_knee_angle:.1f}°, Down: {self.is_down_position}, MinDepth: {self.min_depth_reached}, Reps: {self.rep_count}")
             
-            # Rep counting logic for squats
-            # Simplified: Count rep when transitioning from down position (< threshold) back to up position (> threshold)
+            # Improved rep counting logic with debouncing
+            # State machine: Standing -> Going Down -> Bottom -> Going Up -> Standing
             
             # Check if we're in the down position (knee angle less than threshold)
             if avg_knee_angle < self.down_threshold:
                 # Mark that we've reached minimum depth
                 if not self.min_depth_reached:
                     self.min_depth_reached = True
+                    print(f"Minimum depth reached: knee_angle={avg_knee_angle:.1f}")
                 # Mark that we're currently in down position
                 if not self.is_down_position:
                     self.is_down_position = True
-                    # Debug: print when entering down position
                     print(f"Entered down position: knee_angle={avg_knee_angle:.1f}")
             
             # Check if we're back in the up position
             elif avg_knee_angle > self.up_threshold:
                 # If we were in down position and reached minimum depth, count a rep
                 if self.is_down_position and self.min_depth_reached:
-                    self.rep_count += 1
-                    print(f"Rep {self.rep_count} counted! knee_angle={avg_knee_angle:.1f}")
+                    # Check timing debounce to prevent double counting
+                    time_since_last_rep = current_time - self.last_rep_time
+                    if time_since_last_rep >= self.min_rep_interval or self.rep_count == 0:
+                        self.rep_count += 1
+                        self.last_rep_time = current_time
+                        print(f"✓ Rep {self.rep_count} counted! knee_angle={avg_knee_angle:.1f}, time_since_last={time_since_last_rep:.2f}s")
+                        
+                        # Provide encouraging feedback based on rep count
+                        if self.rep_count == 1:
+                            rep_message = "First rep complete! Great start! ✓"
+                        elif self.rep_count == 4:
+                            rep_message = "Rep 4 complete! Good job! ✓"
+                        elif self.rep_count == 10:
+                            rep_message = "Rep 10 complete! Excellent work! ✓"
+                        elif self.rep_count % 5 == 0:
+                            rep_message = f"Rep {self.rep_count} complete! You're crushing it! ✓"
+                        else:
+                            rep_message = f"Rep {self.rep_count} complete! ✓"
+                        
+                        feedback.append({
+                            "type": "good",
+                            "message": rep_message
+                        })
+                    else:
+                        print(f"Rep ignored - too soon after last rep ({time_since_last_rep:.2f}s)")
+                    # Reset states regardless
                     self.is_down_position = False
                     self.min_depth_reached = False
-                    feedback.append({
-                        "type": "good",
-                        "message": f"Rep {self.rep_count} complete! ✓"
-                    })
                 elif self.is_down_position:
                     # Just came up but didn't reach minimum depth - reset
+                    print(f"Rep not counted - didn't reach min depth (angle was {avg_knee_angle:.1f})")
                     self.is_down_position = False
                     self.min_depth_reached = False
                 # If already in up position, ensure states are reset
@@ -123,12 +152,12 @@ class PoseDetector:
                     "type": "neutral",
                     "message": "Standing position - ready to squat"
                 })
-            elif avg_knee_angle > 120:
+            elif avg_knee_angle > self.down_threshold:
                 feedback.append({
                     "type": "warning",
-                    "message": "Go deeper! Squat to at least 90 degrees"
+                    "message": f"Go deeper! (Current: {int(avg_knee_angle)}°)"
                 })
-            elif avg_knee_angle >= 80 and avg_knee_angle <= 120:
+            elif avg_knee_angle >= 80 and avg_knee_angle <= self.down_threshold:
                 feedback.append({
                     "type": "good",
                     "message": "Perfect squat depth! ✓"
@@ -151,7 +180,7 @@ class PoseDetector:
             else:
                 feedback.append({
                     "type": "good",
-                    "message": "Good knee alignment ✓"
+                    "message": "Perfect knee alignment! ✓"
                 })
             
             # Check back angle (should stay relatively upright)
@@ -166,9 +195,16 @@ class PoseDetector:
                     "message": "Try to keep chest more upright"
                 })
             else:
+                # Provide varied encouragement for good posture
+                posture_messages = [
+                    "Great posture! ✓",
+                    "Excellent form! Keep it up! ✓",
+                    "Perfect technique! ✓",
+                    "Outstanding posture! ✓"
+                ]
                 feedback.append({
                     "type": "good",
-                    "message": "Great posture! ✓"
+                    "message": random.choice(posture_messages) if self.rep_count > 0 else "Great posture! ✓"
                 })
             
             # Check if knees go past toes

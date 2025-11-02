@@ -1,6 +1,5 @@
 "use client";
 import { PhoneFrame } from "@/components/ui/phone-frame";
-import { WelcomeScreen } from "@/components/welcome-screen";
 import { HomeScreen } from "@/components/home-screen";
 import { BottomNav } from "@/components/bottom-nav";
 import { ExercisesScreen } from "@/components/exercises-screen";
@@ -20,7 +19,6 @@ type UserType = null | "patient" | "employee";
 
 export default function Home() {
   const [userType, setUserType] = useState<UserType>(null);
-  const [showWelcome, setShowWelcome] = useState(true);
   const [currentScreen, setCurrentScreen] = useState('home');
   const [showRecording, setShowRecording] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -69,7 +67,16 @@ export default function Home() {
     setShowRecording(true);
   };
 
-  const handleRecordingComplete = (videoBlob: Blob, repCount?: number) => {
+  const handleRecordingComplete = (videoBlob: Blob, repCount?: number, stoppedDueToPain?: boolean) => {
+    // If stopped due to pain, show a message and don't show feedback screen
+    if (stoppedDueToPain) {
+      setShowRecording(false);
+      // The alert has already been stored in localStorage by RecordingScreen
+      // In a real app, this would notify the physio immediately
+      alert("Exercise stopped due to excessive pain. Your physiotherapist has been notified.");
+      return;
+    }
+    
     // Show feedback immediately
     setShowRecording(false);
     setShowFeedback(true);
@@ -88,11 +95,12 @@ export default function Home() {
             timestamp: new Date().toISOString(),
             size: videoBlob.size,
             type: videoBlob.type,
-            repCount: repCount || 0
+            repCount: repCount || 0,
+            stoppedDueToPain: stoppedDueToPain || false
           };
           savedVideos.push(videoData);
           localStorage.setItem('savedVideos', JSON.stringify(savedVideos));
-          console.log("Video saved successfully:", videoData.id, `Reps: ${repCount || 0}`);
+          console.log("Video saved successfully:", videoData.id, `Reps: ${repCount || 0}`, stoppedDueToPain ? "(Stopped due to pain)" : "");
         } catch (error) {
           console.error("Error saving video to localStorage:", error);
         }
@@ -162,14 +170,13 @@ export default function Home() {
           }
         }} onLogout={handleLogout} />;
       default:
-        return <HomeScreen onNavigate={handleNavigate} />;
+        return <HomeScreen onNavigate={handleNavigate} onSelectExercise={(exercise) => setSelectedExercise(exercise)} />;
     }
   };
 
   // Handle login
   const handlePatientLogin = () => {
     setUserType("patient");
-    setShowWelcome(true);
   };
 
   const handleEmployeeLogin = () => {
@@ -178,7 +185,6 @@ export default function Home() {
 
   const handleLogout = () => {
     setUserType(null);
-    setShowWelcome(true);
     setCurrentScreen('home');
     setShowRecording(false);
     setShowFeedback(false);
@@ -188,12 +194,34 @@ export default function Home() {
   // Show login screen if no user type is selected
   if (userType === null) {
     return (
-      <PhoneFrame>
-        <LoginScreen
-          onPatientLogin={handlePatientLogin}
-          onEmployeeLogin={handleEmployeeLogin}
-        />
-      </PhoneFrame>
+      <div className="w-full h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50">
+        {/* Animated Background Shapes */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+          <div className="absolute top-40 right-10 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-60 animate-blob animation-delay-6000"></div>
+        </div>
+        
+        {/* Phone Frame with Patient Login */}
+        <PhoneFrame>
+          <LoginScreen
+            onPatientLogin={handlePatientLogin}
+            onEmployeeLogin={handleEmployeeLogin}
+          />
+        </PhoneFrame>
+        
+        {/* Employee Login Button - Bottom Right Corner */}
+        <button
+          onClick={handleEmployeeLogin}
+          className="fixed bottom-6 right-6 py-3 px-6 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold text-base hover:from-purple-700 hover:to-blue-700 transition-all flex items-center gap-2 shadow-xl hover:shadow-2xl hover:scale-105 z-50"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          Employee Login
+        </button>
+      </div>
     );
   }
 
@@ -210,16 +238,10 @@ export default function Home() {
   return (
     <PhoneFrame>
       <div className="w-full h-full">
-        {showWelcome ? (
-          <WelcomeScreen onComplete={() => setShowWelcome(false)} />
-        ) : (
-          <>
-            {renderScreen()}
-          {!showRecording && !showFeedback && !selectedExercise && ['home', 'community', 'help'].includes(currentScreen) && (
+        {renderScreen()}
+          {!showRecording && !showFeedback && !selectedExercise && ['home', 'community', 'profile'].includes(currentScreen) && (
             <BottomNav activeTab={currentScreen} onNavigate={handleNavigate} />
           )}
-          </>
-        )}
       </div>
     </PhoneFrame>
   );
