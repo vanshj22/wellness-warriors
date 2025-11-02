@@ -1,6 +1,7 @@
 "use client";
-import { Home, HelpCircle, User } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Box, BottomNavigation, BottomNavigationAction, Paper } from "@mui/material";
+import { Home, Help, Person } from "@mui/icons-material";
+import { motion } from "framer-motion";
 
 interface BottomNavProps {
   activeTab: string;
@@ -10,40 +11,75 @@ interface BottomNavProps {
 export function BottomNav({ activeTab, onNavigate }: BottomNavProps) {
   const tabs = [
     { id: "home", label: "Home", icon: Home },
-    { id: "help", label: "Help", icon: HelpCircle },
-    { id: "profile", label: "Profile", icon: User }
+    { id: "help", label: "Help", icon: Help },
+    { id: "profile", label: "Profile", icon: Person },
   ];
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 z-50">
-      <div className="flex justify-around items-center h-16 px-4">
+    <Paper
+      sx={{
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+        boxShadow: "0 -8px 32px rgba(0,0,0,0.15)",
+        borderRadius: "0 0 2.5rem 2.5rem",
+        backdropFilter: "blur(20px)",
+        backgroundColor: "rgba(255, 255, 255, 0.95)",
+        borderTop: "1px solid rgba(0, 0, 0, 0.05)",
+      }}
+      elevation={0}
+    >
+      <BottomNavigation
+        value={activeTab}
+        onChange={(_, newValue) => onNavigate(newValue)}
+        sx={{
+          backgroundColor: "transparent",
+          height: 70,
+          "& .MuiBottomNavigationAction-root": {
+            color: "text.secondary",
+            minWidth: 60,
+            padding: "8px 12px",
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            "&.Mui-selected": {
+              color: "primary.main",
+              fontWeight: 700,
+              transform: "translateY(-2px)",
+            },
+            "& .MuiSvgIcon-root": {
+              fontSize: "1.75rem",
+              transition: "all 0.3s ease",
+            },
+            "&:hover": {
+              backgroundColor: "rgba(1, 42, 74, 0.08)",
+              borderRadius: 2,
+            },
+          },
+        }}
+      >
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
-          
           return (
-            <button
+            <BottomNavigationAction
               key={tab.id}
-              onClick={() => onNavigate(tab.id)}
-              className={cn(
-                "flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all",
-                isActive 
-                  ? "text-blue-600 font-semibold" 
-                  : "text-gray-500 hover:text-gray-700"
-              )}
-            >
-              <Icon className={cn(
-                "w-6 h-6 transition-all",
-                isActive && "scale-110"
-              )} />
-              <span className="text-xs font-medium">{tab.label}</span>
-            </button>
+              label={tab.label}
+              value={tab.id}
+              icon={
+                <motion.div
+                  animate={{
+                    scale: isActive ? 1.1 : 1,
+                  }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Icon />
+                </motion.div>
+              }
+            />
           );
         })}
-      </div>
-      {/* Safe area for home indicator */}
-      <div className="h-4" />
-    </div>
+      </BottomNavigation>
+    </Paper>
   );
 }
-

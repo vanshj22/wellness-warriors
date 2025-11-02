@@ -1,7 +1,7 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Camera, X, CheckCircle, Volume2, Activity } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNarration } from "@/hooks/use-narration";
@@ -9,29 +9,93 @@ import { usePoseWebSocket } from "@/hooks/use-pose-websocket";
 
 interface RecordingScreenProps {
   onBack: () => void;
-  onComplete: (videoBlob: Blob) => void;
+  onComplete: (videoBlob: Blob, repCount?: number) => void;
+  exerciseType?: "auto" | "squat" | "pushup";
 }
 
-export function RecordingScreen({ onBack, onComplete }: RecordingScreenProps) {
+export function RecordingScreen({ onBack, onComplete, exerciseType: propExerciseType }: RecordingScreenProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
   const [poseDetectionEnabled, setPoseDetectionEnabled] = useState(true);
-  const [exerciseType, setExerciseType] = useState<"auto" | "squat" | "pushup">("auto");
+  const [exerciseType, setExerciseType] = useState<"auto" | "squat" | "pushup">(propExerciseType || "auto");
+  
+  // Update exercise type when prop changes
+  useEffect(() => {
+    if (propExerciseType) {
+      setExerciseType(propExerciseType);
+    }
+  }, [propExerciseType]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const frameIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const frameIntervalRef = useRef<number | null>(null);
+  const lastFrameTimeRef = useRef<number>(0);
+  const frameSkipRef = useRef<number>(0);
 
-  const { speak } = useNarration(true);
-  const { feedback, annotatedFrame, isConnected, error: wsError, sendFrame } = usePoseWebSocket(
+  const { speak, isSpeaking } = useNarration(true);
+  const { feedback, annotatedFrame, isConnected, error: wsError, sendFrame, repCount } = usePoseWebSocket(
     poseDetectionEnabled && !showPreview,
     exerciseType
   );
+  
+  // Store rep count with video data
+  const repCountRef = useRef<number>(0);
+  useEffect(() => {
+    repCountRef.current = repCount;
+  }, [repCount]);
+
+  // Voice feedback for posture issues
+  const lastSpokenMessageRef = useRef<string>("");
+  const lastSpokenTimeRef = useRef<number>(0);
+  const VOICE_FEEDBACK_THROTTLE_MS = 3000; // Minimum 3 seconds between voice feedbacks
+
+  useEffect(() => {
+    // Only provide voice feedback when recording and pose detection is enabled
+    if (!isRecording || !poseDetectionEnabled || isSpeaking || showPreview) {
+      return;
+    }
+
+    // Find the most critical feedback (error > warning > others)
+    const errorFeedback = feedback.find(f => f.type === "error");
+    const warningFeedback = feedback.find(f => f.type === "warning");
+    
+    const criticalFeedback = errorFeedback || warningFeedback;
+    
+    if (criticalFeedback) {
+      const now = Date.now();
+      const message = criticalFeedback.message;
+      
+      // Throttle: Only speak if:
+      // 1. It's a different message, OR
+      // 2. It's been at least VOICE_FEEDBACK_THROTTLE_MS since last speech
+      if (
+        message !== lastSpokenMessageRef.current ||
+        (now - lastSpokenTimeRef.current) >= VOICE_FEEDBACK_THROTTLE_MS
+      ) {
+        // Remove checkmark emojis and formatting for cleaner speech
+        const cleanMessage = message
+          .replace(/✓/g, "")
+          .replace(/Rep \d+/g, "")
+          .trim();
+        
+        if (cleanMessage && cleanMessage.length > 0) {
+          speak(cleanMessage, { 
+            rate: 1.2, // Slightly faster for real-time feedback
+            pitch: criticalFeedback.type === "error" ? 0.9 : 1.0, // Lower pitch for errors
+            volume: 1.0 
+          });
+          
+          lastSpokenMessageRef.current = message;
+          lastSpokenTimeRef.current = now;
+        }
+      }
+    }
+  }, [feedback, isRecording, poseDetectionEnabled, isSpeaking, showPreview, speak]);
 
   const narrateScreen = () => {
     if (showPreview) {
@@ -44,7 +108,7 @@ export function RecordingScreen({ onBack, onComplete }: RecordingScreenProps) {
   };
 
   // Capture and send frames to backend for pose detection
-  const captureAndSendFrame = () => {
+  const captureAndSendFrame = useCallback(() => {
     if (!videoRef.current || !canvasRef.current || !poseDetectionEnabled) return;
 
     const video = videoRef.current;
@@ -60,15 +124,19 @@ export function RecordingScreen({ onBack, onComplete }: RecordingScreenProps) {
       return; // Video not ready yet
     }
 
-    // Set canvas size to match video
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // Limit resolution for faster processing (max 480p)
+    const maxWidth = 640;
+    const maxHeight = 480;
+    const scale = Math.min(maxWidth / video.videoWidth, maxHeight / video.videoHeight, 1);
+    
+    canvas.width = video.videoWidth * scale;
+    canvas.height = video.videoHeight * scale;
 
-    // Draw current video frame to canvas
+    // Draw current video frame to canvas (scaled down)
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Convert canvas to base64
-    const frameData = canvas.toDataURL("image/jpeg", 0.8);
+    // Convert canvas to base64 with lower quality for faster processing
+    const frameData = canvas.toDataURL("image/jpeg", 0.6);
     
     // Validate that we got actual image data
     if (!frameData || frameData.length < 100) {
@@ -77,14 +145,19 @@ export function RecordingScreen({ onBack, onComplete }: RecordingScreenProps) {
 
     // Send to backend
     sendFrame(frameData);
-  };
+  }, [poseDetectionEnabled, sendFrame]);
 
   // Initialize camera
   useEffect(() => {
     const initCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user", width: 640, height: 480 },
+          video: { 
+            facingMode: "user", 
+            width: { ideal: 640, max: 1280 },
+            height: { ideal: 480, max: 720 },
+            frameRate: { ideal: 30, max: 30 }
+          },
           audio: true
         });
         
@@ -105,30 +178,49 @@ export function RecordingScreen({ onBack, onComplete }: RecordingScreenProps) {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
-      if (frameIntervalRef.current) {
-        clearInterval(frameIntervalRef.current);
+      if (frameIntervalRef.current !== null) {
+        cancelAnimationFrame(frameIntervalRef.current);
       }
     };
   }, []);
 
   // Start/stop frame capture based on pose detection state
   useEffect(() => {
-    if (poseDetectionEnabled && !showPreview && isConnected) {
-      // Send frames every 200ms (5 fps) to avoid overwhelming the backend
-      frameIntervalRef.current = setInterval(captureAndSendFrame, 200);
-    } else {
-      if (frameIntervalRef.current) {
-        clearInterval(frameIntervalRef.current);
+    if (!poseDetectionEnabled || showPreview || !isConnected) {
+      if (frameIntervalRef.current !== null) {
+        cancelAnimationFrame(frameIntervalRef.current);
         frameIntervalRef.current = null;
       }
+      return;
     }
 
-    return () => {
-      if (frameIntervalRef.current) {
-        clearInterval(frameIntervalRef.current);
+    // Use requestAnimationFrame for smoother video capture
+    // Skip every other frame to maintain ~15-20fps for pose detection
+    const captureFrameLoop = (currentTime: number) => {
+      // Throttle to ~15fps (every ~66ms) for pose detection
+      if (currentTime - lastFrameTimeRef.current >= 66) {
+        // Skip every other frame to reduce load
+        frameSkipRef.current += 1;
+        if (frameSkipRef.current % 2 === 0) {
+          captureAndSendFrame();
+        }
+        lastFrameTimeRef.current = currentTime;
+      }
+      
+      if (poseDetectionEnabled && !showPreview && isConnected) {
+        frameIntervalRef.current = requestAnimationFrame(captureFrameLoop);
       }
     };
-  }, [poseDetectionEnabled, showPreview, isConnected, sendFrame]);
+
+    frameIntervalRef.current = requestAnimationFrame(captureFrameLoop);
+
+    return () => {
+      if (frameIntervalRef.current !== null) {
+        cancelAnimationFrame(frameIntervalRef.current);
+        frameIntervalRef.current = null;
+      }
+    };
+  }, [poseDetectionEnabled, showPreview, isConnected, captureAndSendFrame]);
 
   const startCountdown = () => {
     setCountdown(3);
@@ -184,8 +276,9 @@ export function RecordingScreen({ onBack, onComplete }: RecordingScreenProps) {
 
   const handleSave = () => {
     if (recordedBlob) {
-      onComplete(recordedBlob);
-      onBack();
+      // Save video and navigate - parent component will handle showing feedback
+      onComplete(recordedBlob, repCountRef.current);
+      // Don't call onBack here - let the parent component handle navigation
     }
   };
 
@@ -193,6 +286,7 @@ export function RecordingScreen({ onBack, onComplete }: RecordingScreenProps) {
     setShowPreview(false);
     setRecordedBlob(null);
     chunksRef.current = [];
+    // Rep count will reset automatically when recording starts again
   };
 
   // Handle countdown completion
@@ -219,21 +313,22 @@ export function RecordingScreen({ onBack, onComplete }: RecordingScreenProps) {
         />
       ) : (
         <div className="relative w-full h-full">
-          {/* Original video (hidden if we have annotated frame) */}
+          {/* Original video - always visible for smooth playback */}
           <video
             ref={videoRef}
             autoPlay
             muted
             playsInline
-            className={`w-full h-full object-cover ${annotatedFrame && poseDetectionEnabled ? 'hidden' : ''}`}
+            className="w-full h-full object-cover"
           />
           
-          {/* Annotated frame from pose detection */}
+          {/* Annotated frame overlay from pose detection */}
           {annotatedFrame && poseDetectionEnabled && (
             <img
               src={annotatedFrame}
-              alt="Pose detection"
-              className="w-full h-full object-cover"
+              alt="Pose detection overlay"
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+              style={{ opacity: 0.9 }}
             />
           )}
         </div>
@@ -286,11 +381,34 @@ export function RecordingScreen({ onBack, onComplete }: RecordingScreenProps) {
           </div>
         )}
 
-        {/* Recording indicator */}
+        {/* Recording indicator and Rep Counter */}
         {isRecording && (
-          <div className="absolute top-16 right-4 flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-full pointer-events-auto">
-            <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
-            <span className="font-semibold">Recording...</span>
+          <div className="absolute top-16 right-4 flex flex-col items-end gap-3 pointer-events-auto z-50">
+            <div className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-full shadow-lg">
+              <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
+              <span className="font-semibold">Recording...</span>
+            </div>
+            {/* Rep Counter - Always show when recording */}
+            <motion.div
+              key={`rep-${repCount}`}
+              initial={{ scale: repCount > 0 ? 1.3 : 1, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className={`px-6 py-4 rounded-xl shadow-2xl min-w-[100px] ${
+                repCount > 0 ? "bg-green-500" : poseDetectionEnabled ? "bg-gray-700" : "bg-blue-600"
+              } text-white border-2 border-white/20`}
+            >
+              <div className="text-center">
+                <div className="text-xs font-semibold mb-1 tracking-wider uppercase">REPS</div>
+                <div className="text-4xl font-bold">{repCount}</div>
+                {!poseDetectionEnabled && (
+                  <div className="text-[10px] mt-1 opacity-75">Enable pose detection for auto-count</div>
+                )}
+                {poseDetectionEnabled && isConnected && repCount === 0 && (
+                  <div className="text-[10px] mt-1 opacity-75">Ready to count</div>
+                )}
+              </div>
+            </motion.div>
           </div>
         )}
 

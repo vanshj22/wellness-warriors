@@ -1,143 +1,518 @@
-# Setup Guide - Wellness Warriors
+# Setup Guide
 
-## Quick Setup (5 minutes)
+> **Comprehensive installation and configuration instructions for Wellness Warriors**
 
-### Step 1: Install Python Dependencies
+---
 
-Open a terminal in the `wellness-warriors` directory and run:
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Quick Setup](#quick-setup)
+- [Detailed Installation](#detailed-installation)
+- [Configuration](#configuration)
+- [Verification](#verification)
+- [Troubleshooting](#troubleshooting)
+- [Platform-Specific Notes](#platform-specific-notes)
+
+---
+
+## Prerequisites
+
+### Required Software
+
+| Software | Version | Download |
+|----------|---------|----------|
+| **Python** | 3.8+ | [python.org](https://www.python.org/downloads/) |
+| **Node.js** | 18+ | [nodejs.org](https://nodejs.org/) |
+| **pip** | Latest | Included with Python |
+| **npm** | Latest | Included with Node.js |
+
+### System Requirements
+
+- **Operating System:** Windows 10+, macOS 10.14+, or Linux (Ubuntu 18.04+)
+- **RAM:** Minimum 4GB, 8GB recommended
+- **Storage:** 2GB free space for dependencies
+- **Webcam:** Built-in or USB webcam
+- **Internet:** Required for initial dependency download only
+
+### Verification
+
+Check that prerequisites are installed:
 
 ```bash
-cd backend
+# Check Python version
+python --version
+# Should output: Python 3.8.x or higher
+
+# Check Node.js version
+node --version
+# Should output: v18.x.x or higher
+
+# Check pip
+pip --version
+# Should output: pip x.x.x
+
+# Check npm
+npm --version
+# Should output: x.x.x
+```
+
+---
+
+## Quick Setup
+
+> **For experienced users - get running in 3 commands**
+
+```bash
+# Terminal 1 - Backend
+cd wellness-warriors/backend
 pip install -r requirements.txt
-```
+python main.py
 
-**Note:** If you don't have Python installed, download it from [python.org](https://www.python.org/downloads/) (version 3.8 or higher).
-
-### Step 2: Install Node.js Dependencies
-
-In the `wellness-warriors` directory:
-
-```bash
+# Terminal 2 - Frontend (in new terminal)
+cd wellness-warriors
 npm install
-```
-
-**Note:** If you don't have Node.js installed, download it from [nodejs.org](https://nodejs.org/) (version 18 or higher).
-
-### Step 3: Start the Application
-
-You need TWO terminals open:
-
-#### Terminal 1 - Start Backend
-```bash
-cd wellness-warriors
-# Windows:
-start-backend.bat
-
-# Mac/Linux:
-cd backend && python main.py
-```
-
-Wait until you see: `INFO: Uvicorn running on http://0.0.0.0:8000`
-
-#### Terminal 2 - Start Frontend
-```bash
-cd wellness-warriors
-# Windows:
-start-frontend.bat
-
-# Mac/Linux:
 npm run dev
 ```
 
-Wait until you see: `✓ Ready in X.Xs`
+Open browser to: **http://localhost:3000**
 
-### Step 4: Open the App
+For detailed steps, continue reading.
 
-Open your browser and go to: **http://localhost:3000**
+---
 
-## Verification Checklist
+## Detailed Installation
 
-- [ ] Backend running on port 8000 (check Terminal 1)
-- [ ] Frontend running on port 3000 (check Terminal 2)
-- [ ] Browser shows the Wellness Warriors welcome screen
-- [ ] Camera permission granted when you start recording
-- [ ] Pose detection button (Activity icon) appears when recording
+### Step 1: Clone or Download Repository
 
-## Common Issues
+**Option A: Git Clone**
+```bash
+git clone <repository-url>
+cd wellness-warriors
+```
 
-### Issue: "Module not found" errors in Python
+**Option B: Download ZIP**
+1. Download repository as ZIP
+2. Extract to desired location
+3. Open terminal in extracted folder
+
+### Step 2: Install Python Dependencies
+
+#### Windows
+
+```bash
+# Navigate to backend directory
+cd wellness-warriors\backend
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+**Expected output:**
+```
+Collecting fastapi...
+Collecting mediapipe...
+Collecting opencv-python...
+...
+Successfully installed ...
+```
+
+⏱️ **Time:** 3-5 minutes (MediaPipe is large ~100MB)
+
+#### macOS/Linux
+
+```bash
+# Navigate to backend directory
+cd wellness-warriors/backend
+
+# Install dependencies
+pip install -r requirements.txt
+
+# If pip fails, try pip3
+pip3 install -r requirements.txt
+```
+
+**Note:** On some systems, you may need `python3` and `pip3` instead of `python` and `pip`.
+
+### Step 3: Install Node.js Dependencies
+
+```bash
+# Navigate to project root
+cd wellness-warriors
+
+# Install dependencies
+npm install
+```
+
+**Expected output:**
+```
+added 1234 packages, and audited 1235 packages in 45s
+```
+
+⏱️ **Time:** 2-3 minutes
+
+**Note:** First-time installation may take longer. Subsequent runs will be faster due to caching.
+
+---
+
+## Configuration
+
+### Backend Configuration
+
+The backend requires minimal configuration. Default settings:
+
+- **Port:** 8000
+- **Host:** 0.0.0.0 (all interfaces)
+- **CORS:** Enabled for localhost:3000 and localhost:3001
+
+**To change port** (edit `backend/main.py`):
+```python
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)  # Change 8000 to desired port
+```
+
+**To change CORS origins** (edit `backend/main.py`):
+```python
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    # Add your origins here
+)
+```
+
+### Frontend Configuration
+
+Default frontend settings:
+
+- **Port:** 3000 (auto-increments if busy)
+- **WebSocket URL:** ws://localhost:8000/ws/pose
+
+**To change WebSocket URL** (edit `hooks/use-pose-websocket.ts`):
+```typescript
+const ws = new WebSocket("ws://localhost:8000/ws/pose");
+// Change URL here if backend uses different port
+```
+
+**Environment Variables** (create `.env.local`):
+```env
+NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws/pose
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+---
+
+## Verification
+
+### Checklist
+
+After installation, verify everything is set up correctly:
+
+#### ✅ Backend Verification
+
+**Terminal 1 - Start Backend:**
+```bash
+cd wellness-warriors/backend
+python main.py
+```
+
+**Expected output:**
+```
+INFO:     Started server process [12345]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+```
+
+**Test health endpoint:**
+```bash
+curl http://localhost:8000/health
+# Should return: {"status":"healthy"}
+```
+
+#### ✅ Frontend Verification
+
+**Terminal 2 - Start Frontend:**
+```bash
+cd wellness-warriors
+npm run dev
+```
+
+**Expected output:**
+```
+▲ Next.js 16.0.1 (Turbopack)
+- Local:        http://localhost:3000
+✓ Ready in 2.1s
+```
+
+**Open browser:**
+- Navigate to: `http://localhost:3000`
+- Should see Wellness Warriors welcome screen
+
+#### ✅ Integration Test
+
+1. **Navigate to Exercises:**
+   - Click "My Exercises" on home screen
+
+2. **Start Recording:**
+   - Click "Start Recording"
+   - Grant camera permission
+   - Dismiss "Get Ready" popup
+
+3. **Verify Pose Detection:**
+   - Activity button should be blue (top right)
+   - Stand in frame (6-8 feet away)
+   - Should see skeleton overlay
+   - Feedback panel should appear (right side)
+
+4. **Test Exercise:**
+   - Do a squat
+   - Should see feedback messages
+   - Should hear voice feedback
+   - Rep counter should increment
+
+---
+
+## Troubleshooting
+
+### Installation Issues
+
+#### "Module not found" in Python
+
+**Problem:** Dependencies not installed correctly.
 
 **Solution:**
 ```bash
+# Upgrade pip first
 pip install --upgrade pip
+# or
+python -m pip install --upgrade pip
+
+# Reinstall dependencies
 pip install -r backend/requirements.txt
 ```
 
-### Issue: "Port 8000 already in use"
+**If using virtual environment:**
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate (Windows)
+venv\Scripts\activate
+
+# Activate (Mac/Linux)
+source venv/bin/activate
+
+# Install dependencies
+pip install -r backend/requirements.txt
+```
+
+#### "Command not found: npm"
+
+**Problem:** Node.js not installed or not in PATH.
 
 **Solution:**
+1. Install Node.js from [nodejs.org](https://nodejs.org/)
+2. Restart terminal
+3. Verify: `npm --version`
+
+#### Port Already in Use
+
+**Backend Port 8000:**
 ```bash
-# Windows:
+# Windows
 netstat -ano | findstr :8000
 taskkill /PID <PID_NUMBER> /F
 
-# Mac/Linux:
+# Mac/Linux
 lsof -ti:8000 | xargs kill -9
 ```
 
-### Issue: "Port 3000 already in use"
+**Frontend Port 3000:**
+- Next.js automatically uses port 3001 if 3000 is busy
+- Or change port: `npm run dev -- -p 3001`
 
-**Solution:** The Next.js dev server will automatically use port 3001. Just use that port instead.
+#### MediaPipe Installation Fails
 
-### Issue: Camera not working
+**Problem:** MediaPipe requires specific system dependencies.
 
-**Solutions:**
-1. Grant camera permissions in your browser
-2. Make sure you're using `localhost` (not an IP address)
-3. Close other apps that might be using the camera
-4. Try a different browser (Chrome recommended)
+**Solution:**
 
-### Issue: Pose detection not connecting
+**Windows:**
+- Install Visual C++ Redistributable
+- Ensure Python 3.8-3.11 (MediaPipe may not support 3.12+ yet)
 
-**Solutions:**
-1. Make sure the Python backend is running (check Terminal 1)
-2. Look for the message: "WebSocket connection established"
-3. Check browser console (F12) for errors
-4. Verify the backend URL in the browser console
+**macOS:**
+- May require Xcode Command Line Tools: `xcode-select --install`
 
-## Testing the Pose Detection
+**Linux:**
+```bash
+sudo apt-get update
+sudo apt-get install python3-dev python3-pip
+pip install --upgrade pip
+pip install mediapipe
+```
 
-1. Click "My Exercises" on the home screen
-2. Click "Start Recording"
-3. Dismiss the "Get Ready" popup
-4. Look for the Activity button (should be blue/highlighted)
-5. Look for "Live Feedback" panel on the right side
-6. Try doing a squat - you should see feedback messages
+### Runtime Issues
 
-## Performance Tips
+#### Backend Crashes on Start
 
-- **Good lighting** helps pose detection accuracy
-- **Stand back** so your whole body is visible
-- **Stable camera** position works best
-- **Close other apps** for better performance
+**Check:**
+1. Python version: `python --version` (must be 3.8+)
+2. Dependencies: `pip list | grep -i fastapi`
+3. Error messages in terminal
 
-## Need Help?
+**Try:**
+```bash
+# Test backend directly
+python backend/test_backend.py
+```
 
-If you're still having issues:
+#### Frontend Won't Start
 
-1. Check both terminal windows for error messages
-2. Make sure all dependencies are installed correctly
-3. Try restarting both servers
-4. Clear your browser cache and reload
+**Check:**
+1. Node version: `node --version` (must be 18+)
+2. Dependencies: `npm list`
+3. Port availability
 
-## What's Next?
+**Try:**
+```bash
+# Clean reinstall
+rm -rf node_modules .next package-lock.json
+npm install
+npm run dev
+```
 
-Once everything is running:
+#### Camera Not Working
 
-1. Complete the welcome tutorial
-2. Try recording an exercise with pose detection
-3. Explore the different screens (Plan, Community, Profile)
-4. Adjust text size and use voice narration for accessibility
+**Check:**
+1. Browser permissions (Settings → Privacy → Camera)
+2. No other apps using camera
+3. Using localhost (not IP address)
+4. HTTPS required (or localhost exception)
 
-Enjoy using Wellness Warriors! 💪
+**Try:**
+- Different browser (Chrome/Edge recommended)
+- Refresh page
+- Clear browser cache
 
+#### Pose Detection Not Connecting
+
+**Check:**
+1. Backend running (Terminal 1)
+2. WebSocket URL correct
+3. No firewall blocking port 8000
+4. Browser console (F12) for errors
+
+**Verify:**
+- Check Terminal 1 for "WebSocket connection established"
+- Check browser console for connection messages
+
+---
+
+## Platform-Specific Notes
+
+### Windows
+
+**Command Prompt vs PowerShell:**
+- Both work, but syntax may differ
+- Use backslashes for paths: `cd wellness-warriors\backend`
+
+**Python Installation:**
+- Check "Add Python to PATH" during installation
+- May need to use `py` instead of `python`: `py main.py`
+
+**Batch Files:**
+- Use provided `start-backend.bat` and `start-frontend.bat`
+- Double-click to run, or run from command prompt
+
+### macOS
+
+**Python Commands:**
+- May need `python3` and `pip3` instead of `python` and `pip`
+- Install via Homebrew: `brew install python3`
+
+**Permissions:**
+- Grant Terminal camera access in System Preferences
+- May need to allow Python in Security settings
+
+**Paths:**
+- Use forward slashes: `cd wellness-warriors/backend`
+
+### Linux
+
+**Package Manager:**
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install python3-pip nodejs npm
+
+# Fedora
+sudo dnf install python3-pip nodejs npm
+```
+
+**Python Virtual Environment:**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r backend/requirements.txt
+```
+
+**Permissions:**
+- May need sudo for system-wide installs
+- Consider using virtual environments instead
+
+---
+
+## Post-Installation
+
+### First Run
+
+1. **Start both servers** (Terminal 1 and Terminal 2)
+2. **Open browser** to http://localhost:3000
+3. **Complete welcome tutorial**
+4. **Test camera and pose detection**
+
+### Regular Use
+
+**Every time you want to use the app:**
+
+1. **Terminal 1:** `cd wellness-warriors/backend && python main.py`
+2. **Terminal 2:** `cd wellness-warriors && npm run dev`
+3. **Open browser** to http://localhost:3000
+
+**Shortcut Scripts (Windows):**
+- Double-click `start-backend.bat`
+- Double-click `start-frontend.bat`
+
+### Updates
+
+**When updating the codebase:**
+
+```bash
+# Pull latest code
+git pull
+
+# Update backend dependencies (if requirements.txt changed)
+cd backend
+pip install -r requirements.txt --upgrade
+
+# Update frontend dependencies (if package.json changed)
+cd ..
+npm install
+```
+
+---
+
+## Need More Help?
+
+- **Quick Start:** See [QUICKSTART.md](./QUICKSTART.md) for 5-minute setup
+- **FAQ:** Check [FAQ.md](./FAQ.md) for common questions
+- **Architecture:** Review [ARCHITECTURE.md](./ARCHITECTURE.md) for technical details
+- **Visual Guide:** See [VISUAL_GUIDE.md](./VISUAL_GUIDE.md) for screenshots
+
+---
+
+**Setup Complete!** 🎉
+
+If you encounter issues not covered here, check the troubleshooting section or refer to the FAQ.

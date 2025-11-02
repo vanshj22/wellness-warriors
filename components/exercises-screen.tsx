@@ -1,96 +1,458 @@
 "use client";
 import { motion } from "framer-motion";
-import { Play, Camera, Volume2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+  Box,
+  Container,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  IconButton,
+  Chip,
+  Fade,
+  Paper,
+} from "@mui/material";
+import {
+  PlayCircle,
+  FitnessCenter,
+  Accessible,
+  ArrowForward,
+  VolumeUp,
+  Lightbulb,
+  Visibility,
+  Timer,
+  LocalFireDepartment,
+  WbSunny,
+  Videocam,
+  Straighten,
+  HealthAndSafety,
+} from "@mui/icons-material";
 import { useNarration } from "@/hooks/use-narration";
 
 interface ExercisesScreenProps {
   onBack: () => void;
   onStartRecording: () => void;
+  onSelectExercise?: (exercise: any) => void;
 }
 
-export function ExercisesScreen({ onBack, onStartRecording }: ExercisesScreenProps) {
+const prescribedExercises = [
+  {
+    id: "squats",
+    name: "Squats",
+    description: "Lower body strength exercise",
+    icon: FitnessCenter,
+    color: "#2563eb",
+    gradient: "linear-gradient(135deg, #012a4a 0%, #01497c 100%)",
+    instructions: [
+      "Stand with feet shoulder-width apart",
+      "Lower your body by bending your knees and pushing your hips back",
+      "Keep your chest up and core engaged",
+      "Lower until thighs are parallel to floor",
+      "Push through heels to return to starting position",
+    ],
+  },
+  {
+    id: "assisted-shoulder-flexion",
+    name: "Assisted Shoulder Flexion",
+    description: "Shoulder mobility and strength",
+    icon: Accessible,
+    color: "#10b981",
+    gradient: "linear-gradient(135deg, #01497c 0%, #012a4a 100%)",
+    instructions: [
+      "Stand or sit with good posture",
+      "Raise your arm forward and upward",
+      "Keep your elbow straight throughout the movement",
+      "Lift as high as comfortable without pain",
+      "Slowly lower back to starting position",
+    ],
+  },
+  {
+    id: "scaption-strengthening",
+    name: "Scaption Strengthening",
+    description: "Shoulder stabilization exercise",
+    icon: PlayCircle,
+    color: "#8b5cf6",
+    gradient: "linear-gradient(135deg, #468faf 0%, #61a5c2 100%)",
+    instructions: [
+      "Stand with arms at your sides",
+      "Lift arms at a 45-degree angle (scapular plane)",
+      "Thumbs should point up",
+      "Raise to shoulder height or as high as comfortable",
+      "Control the descent",
+    ],
+  },
+  {
+    id: "pec-stretch",
+    name: "Pec Stretch (Neck, Right Shoulder)",
+    description: "3 sets × 30 seconds daily",
+    icon: Straighten,
+    color: "#10b981",
+    gradient: "linear-gradient(135deg, #2a6f97 0%, #61a5c2 100%)",
+    instructions: [
+      "Stand in a doorway with your arm at a 90-degree angle",
+      "Gently lean forward until you feel a stretch in your chest",
+      "Hold the stretch without causing shoulder pain",
+      "Hold for 30 seconds, then release",
+      "Repeat for 3 sets",
+    ],
+    importance: "Helps relieve tension in the pectoral muscles and improve posture.",
+    frequency: "3 sets × 30 seconds daily",
+  },
+  {
+    id: "neck-retractions",
+    name: "Neck Retractions (Neck)",
+    description: "3 sets × 10 reps daily",
+    icon: HealthAndSafety,
+    color: "#f59e0b",
+    gradient: "linear-gradient(135deg, #01497c 0%, #2a6f97 100%)",
+    instructions: [
+      "Sit or stand with your back straight",
+      "Gently pull your head back, keeping your chin tucked",
+      "Hold for a moment, then release",
+      "Repeat for 10 repetitions",
+      "Complete 3 sets total",
+    ],
+    importance: "Improves neck posture and reduces strain on the cervical spine.",
+    frequency: "3 sets × 10 reps daily",
+  },
+  {
+    id: "scapular-retractions",
+    name: "Scapular Retractions (Right Shoulder)",
+    description: "3 sets × 10 reps daily",
+    icon: FitnessCenter,
+    color: "#ef4444",
+    gradient: "linear-gradient(135deg, #468faf 0%, #014f86 100%)",
+    instructions: [
+      "Stand or sit with your arms at your sides",
+      "Squeeze your shoulder blades together",
+      "Hold for a moment, then release",
+      "Repeat for 10 repetitions",
+      "Complete 3 sets total",
+    ],
+    importance: "Strengthens the muscles around the shoulder blades to improve posture.",
+    frequency: "3 sets × 10 reps daily",
+  },
+];
+
+const exerciseTips = [
+  {
+    icon: Lightbulb,
+    title: "Proper Form",
+    tip: "Focus on maintaining correct posture throughout each movement. Quality over quantity!",
+    color: "#f59e0b",
+  },
+  {
+    icon: Visibility,
+    title: "Full Body Visibility",
+    tip: "Make sure your entire body is visible in the frame before starting. Stand 6-8 feet from the camera.",
+    color: "#06b6d4",
+  },
+  {
+    icon: Timer,
+    title: "Controlled Movements",
+    tip: "Move slowly and deliberately. Don't rush through exercises - take your time with each rep.",
+    color: "#8b5cf6",
+  },
+  {
+    icon: LocalFireDepartment,
+    title: "Warm Up First",
+    tip: "Do a quick 2-3 minute warm-up before recording. Light stretching or gentle movements help prevent injury.",
+    color: "#ef4444",
+  },
+  {
+    icon: WbSunny,
+    title: "Breathing",
+    tip: "Don't hold your breath! Breathe naturally throughout the exercise. Inhale on the easier phase, exhale on exertion.",
+    color: "#10b981",
+  },
+  {
+    icon: Videocam,
+    title: "Lighting & Space",
+    tip: "Record in a well-lit area with enough space around you. Ensure good visibility of your body position.",
+    color: "#2563eb",
+  },
+];
+
+export function ExercisesScreen({
+  onBack,
+  onStartRecording,
+  onSelectExercise,
+}: ExercisesScreenProps) {
   const { speak } = useNarration(true);
 
   const narrateScreen = () => {
-    speak("My Exercises screen. Tap Start Recording to begin recording your exercise. Make sure your whole body is visible in the frame.");
+    speak(
+      "My Exercises screen. Select an exercise to view instructions and start recording."
+    );
+  };
+
+  const handleExerciseSelect = (exercise: any) => {
+    if (onSelectExercise) {
+      onSelectExercise(exercise);
+    }
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50 pb-20 overflow-y-auto">
-      {/* Header */}
-      <div className="pt-16 px-6 pb-4">
-        <Button
-          onClick={onBack}
-          variant="ghost"
-          className="mb-4 -ml-2"
-        >
-          ← Back
-        </Button>
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">My Exercises</h1>
-        <p className="text-lg text-gray-600">Record and check your form</p>
-      </div>
+    <Box
+      className="hide-scrollbar"
+      sx={{
+        width: "100%",
+        height: "100%",
+        minHeight: "100%",
+        background: "linear-gradient(135deg, #012a4a 0%, #01497c 50%, #2a6f97 100%)",
+        pb: 10,
+        overflowY: "auto",
+        "&::-webkit-scrollbar": {
+          display: "none !important", // Chrome, Safari, Opera
+        },
+      }}
+      style={{
+        scrollbarWidth: "none", // Firefox
+        msOverflowStyle: "none", // IE and Edge
+      } as React.CSSProperties}
+    >
+      <Container maxWidth="sm" sx={{ py: 4 }}>
+        {/* Header */}
+        <Fade in timeout={600}>
+          <Box sx={{ mb: 3 }}>
+            <Button
+              onClick={onBack}
+              sx={{
+                color: "white",
+                mb: 2,
+                "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+              }}
+            >
+              ← Back
+            </Button>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 800,
+                color: "white",
+                mb: 1,
+                textShadow: "0 2px 8px rgba(0,0,0,0.2)",
+              }}
+            >
+              My Exercises
+            </Typography>
+            <Typography
+              variant="h6"
+              sx={{
+                color: "rgba(255,255,255,0.9)",
+                fontWeight: 400,
+              }}
+            >
+              Record and check your form
+            </Typography>
+          </Box>
+        </Fade>
 
-      {/* Instruction Card */}
-      <div className="px-6 mb-6">
-        <Card className="p-6 bg-blue-50 border-2 border-blue-300">
-          <div className="flex items-start gap-3">
-            <div className="text-3xl">📋</div>
-            <div>
-              <h3 className="text-xl font-semibold text-blue-900 mb-2">
-                Get Ready!
-              </h3>
-              <p className="text-base text-blue-800 leading-relaxed">
-                Stand in the box and start your stretch. Make sure your whole body is visible in the frame.
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
+        {/* Prescribed Exercises */}
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+            <Chip
+              label="Your Prescribed Exercises"
+              sx={{
+                backgroundColor: "rgba(255,255,255,0.2)",
+                color: "white",
+                fontWeight: 600,
+                fontSize: "0.875rem",
+              }}
+            />
+          </Box>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {prescribedExercises.map((exercise, index) => {
+              const Icon = exercise.icon;
+              return (
+                <motion.div
+                  key={exercise.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1, duration: 0.5 }}
+                >
+                  <Card
+                    onClick={() => handleExerciseSelect(exercise)}
+                    sx={{
+                      cursor: "pointer",
+                      background: "white",
+                      position: "relative",
+                      overflow: "hidden",
+                      "&::before": {
+                        content: '""',
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: 4,
+                        background: exercise.gradient,
+                      },
+                      "&:hover": {
+                        transform: "translateY(-4px)",
+                        boxShadow: "0 12px 32px rgba(0,0,0,0.15)",
+                      },
+                      transition: "all 0.3s ease",
+                    }}
+                  >
+                    <CardContent sx={{ p: 2.5 }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 2 }}
+                      >
+                        <Box
+                          sx={{
+                            p: 2,
+                            borderRadius: 3,
+                            background: exercise.gradient,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            minWidth: 64,
+                            height: 64,
+                          }}
+                        >
+                          <Icon sx={{ fontSize: 32, color: "white" }} />
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 700,
+                              color: "text.primary",
+                              mb: 0.5,
+                            }}
+                          >
+                            {exercise.name}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{ color: "text.secondary", mb: 0.5 }}
+                          >
+                            {exercise.description}
+                          </Typography>
+                          {exercise.frequency && (
+                            <Chip
+                              label={exercise.frequency}
+                              size="small"
+                              sx={{
+                                backgroundColor: `${exercise.color}15`,
+                                color: exercise.color,
+                                fontWeight: 600,
+                                fontSize: "0.75rem",
+                                height: 22,
+                              }}
+                            />
+                          )}
+                        </Box>
+                        <ArrowForward sx={{ color: "text.secondary" }} />
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </Box>
+        </Box>
 
-      {/* Camera Preview Placeholder */}
-      <div className="flex-1 px-6 mb-6">
-        <div className="relative w-full h-full max-h-64 rounded-2xl overflow-hidden bg-gray-900 shadow-xl">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-              <div className="text-6xl">📷</div>
-              <p className="text-white text-lg">Ready to record</p>
-            </div>
-          </div>
-          
-          {/* Person outline guide */}
-          <div className="absolute inset-4 flex items-center justify-center">
-            <div className="border-4 border-white/30 border-dashed rounded-xl h-3/4 w-2/3" />
-          </div>
-        </div>
-      </div>
+        {/* Exercise Tips */}
+        <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+            <Chip
+              label="Exercise Tips"
+              sx={{
+                backgroundColor: "rgba(255,255,255,0.2)",
+                color: "white",
+                fontWeight: 600,
+                fontSize: "0.875rem",
+              }}
+            />
+          </Box>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {exerciseTips.map((tipItem, index) => {
+              const Icon = tipItem.icon;
+              return (
+                <motion.div
+                  key={tipItem.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1, duration: 0.4 }}
+                >
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2.5,
+                      background: "white",
+                      borderRadius: 3,
+                      border: `2px solid ${tipItem.color}20`,
+                      "&:hover": {
+                        borderColor: `${tipItem.color}40`,
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                      },
+                      transition: "all 0.3s ease",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "start", gap: 2 }}>
+                      <Box
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 2,
+                          backgroundColor: `${tipItem.color}15`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Icon sx={{ fontSize: 24, color: tipItem.color }} />
+                      </Box>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{
+                            fontWeight: 700,
+                            color: "text.primary",
+                            mb: 0.5,
+                          }}
+                        >
+                          {tipItem.title}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "text.secondary", lineHeight: 1.6 }}
+                        >
+                          {tipItem.tip}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Paper>
+                </motion.div>
+              );
+            })}
+          </Box>
+        </Box>
 
-      {/* Narrate Button */}
-      <div className="px-6 mb-4">
-        <Button
-          onClick={narrateScreen}
-          variant="outline"
-          size="sm"
-          className="w-full h-12 border-2"
-        >
-          <Volume2 className="mr-2 w-5 h-5" />
-          Narrate
-        </Button>
-      </div>
-
-      {/* Start Recording Button */}
-      <div className="px-6 pb-4">
-        <Button
-          onClick={onStartRecording}
-          size="lg"
-          className="w-full h-16 text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
-        >
-          <Play className="mr-3 w-7 h-7" />
-          Start Recording
-        </Button>
-      </div>
-    </div>
+        {/* Narrate Button */}
+        <Fade in timeout={1500}>
+          <Button
+            onClick={narrateScreen}
+            fullWidth
+            variant="outlined"
+            size="large"
+            sx={{
+              borderColor: "rgba(255,255,255,0.3)",
+              color: "white",
+              py: 1.5,
+              borderWidth: 2,
+              "&:hover": {
+                borderColor: "rgba(255,255,255,0.5)",
+                backgroundColor: "rgba(255,255,255,0.1)",
+                borderWidth: 2,
+              },
+            }}
+            startIcon={<VolumeUp />}
+          >
+            Narrate
+          </Button>
+        </Fade>
+      </Container>
+    </Box>
   );
 }
-

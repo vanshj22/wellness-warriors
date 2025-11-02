@@ -27,7 +27,7 @@ export const PhoneFrame = ({ children, className }: PhoneFrameProps) => {
           </div>
 
           {/* Screen Content */}
-          <div className="w-full h-full bg-transparent overflow-hidden rounded-[2.5rem]">
+          <div className="relative w-full h-full bg-transparent overflow-auto rounded-[2.5rem] hide-scrollbar">
             {children}
           </div>
 

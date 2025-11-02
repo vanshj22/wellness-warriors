@@ -99,10 +99,19 @@ async def websocket_pose_endpoint(websocket: WebSocket):
                 
                 if frame is not None:
                     # Process frame
-                    annotated_frame, feedback = detector.process_frame(frame, exercise_type)
+                    annotated_frame, feedback, rep_count = detector.process_frame(frame, exercise_type)
                     
-                    # Encode annotated frame back to base64
-                    _, buffer = cv2.imencode('.jpg', annotated_frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+                    # Debug: log rep count occasionally
+                    if hasattr(detector, '_debug_frame_count'):
+                        detector._debug_frame_count += 1
+                    else:
+                        detector._debug_frame_count = 0
+                    
+                    if detector._debug_frame_count % 30 == 0:
+                        print(f"Backend: exercise_type={exercise_type}, rep_count={rep_count}, connection_id={connection_id}")
+                    
+                    # Encode annotated frame back to base64 with lower quality for faster transmission
+                    _, buffer = cv2.imencode('.jpg', annotated_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
                     annotated_base64 = base64.b64encode(buffer).decode('utf-8')
                     
                     # Send response
@@ -110,7 +119,8 @@ async def websocket_pose_endpoint(websocket: WebSocket):
                         "type": "feedback",
                         "feedback": feedback,
                         "annotated_frame": f"data:image/jpeg;base64,{annotated_base64}",
-                        "exercise_detected": exercise_type
+                        "exercise_detected": exercise_type,
+                        "rep_count": rep_count
                     }
                     
                     await websocket.send_text(json.dumps(response))
@@ -132,11 +142,13 @@ async def websocket_pose_endpoint(websocket: WebSocket):
             "message": str(e)
         }))
     finally:
-        # Cleanup
+        # Get final rep count before cleanup
+        final_rep_count = 0
         if connection_id in pose_detectors:
+            final_rep_count = pose_detectors[connection_id].rep_count
             pose_detectors[connection_id].close()
             del pose_detectors[connection_id]
-        print(f"Cleaned up detector for connection: {connection_id}")
+        print(f"Cleaned up detector for connection: {connection_id}, final rep count: {final_rep_count}")
 
 
 if __name__ == "__main__":

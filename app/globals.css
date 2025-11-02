@@ -119,6 +119,44 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Hide scrollbar but keep scroll functionality - Global */
+  html, 
+  body {
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important; /* IE and Edge */
+  }
+  
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none !important; /* Chrome, Safari, Opera */
+  }
+  
+  /* For scrollable containers - applied globally */
+  .hide-scrollbar,
+  *[class*="overflow"],
+  *[style*="overflow"] {
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important; /* IE and Edge */
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar,
+  *[class*="overflow"]::-webkit-scrollbar,
+  *[style*="overflow"]::-webkit-scrollbar {
+    display: none !important; /* Chrome, Safari, Opera */
+  }
+  
+  /* Ensure all overflow containers hide scrollbars */
+  div[style*="overflow"],
+  div[class*="overflow"] {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  
+  div[style*="overflow"]::-webkit-scrollbar,
+  div[class*="overflow"]::-webkit-scrollbar {
+    display: none !important;
+  }
 }
 
 /* Aurora animation */

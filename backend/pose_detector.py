@@ -16,8 +16,16 @@ class PoseDetector:
         self.pose = self.mp_pose.Pose(
             min_detection_confidence=0.5,
             min_tracking_confidence=0.5,
-            model_complexity=1
+            model_complexity=0  # Use simpler model (0=fast, 1=balanced, 2=accurate)
         )
+        # Rep counting state
+        self.rep_count = 0
+        self.is_down_position = False  # For squats: True when in down position
+        self.last_knee_angle = 180  # Track knee angle for squat rep counting
+        self.down_threshold = 120  # Knee angle threshold for "down" position (more lenient)
+        self.up_threshold = 140  # Knee angle threshold for "up" position (more lenient)
+        self.min_depth_reached = False  # Track if we've reached minimum depth
+        print(f"PoseDetector initialized: down_threshold={self.down_threshold}, up_threshold={self.up_threshold}")
         
     def calculate_angle(self, a: Tuple[float, float], b: Tuple[float, float], c: Tuple[float, float]) -> float:
         """Calculate angle between three points"""
@@ -64,6 +72,50 @@ class PoseDetector:
             
             avg_knee_angle = (left_knee_angle + right_knee_angle) / 2
             avg_hip_angle = (left_hip_angle + right_hip_angle) / 2
+            
+            # Debug logging every 30 frames (about once per second)
+            if not hasattr(self, 'frame_debug_count'):
+                self.frame_debug_count = 0
+            self.frame_debug_count += 1
+            if self.frame_debug_count % 30 == 0:
+                print(f"[Squat] Angle: {avg_knee_angle:.1f}°, Down: {self.is_down_position}, MinDepth: {self.min_depth_reached}, Reps: {self.rep_count}")
+            
+            # Rep counting logic for squats
+            # Simplified: Count rep when transitioning from down position (< threshold) back to up position (> threshold)
+            
+            # Check if we're in the down position (knee angle less than threshold)
+            if avg_knee_angle < self.down_threshold:
+                # Mark that we've reached minimum depth
+                if not self.min_depth_reached:
+                    self.min_depth_reached = True
+                # Mark that we're currently in down position
+                if not self.is_down_position:
+                    self.is_down_position = True
+                    # Debug: print when entering down position
+                    print(f"Entered down position: knee_angle={avg_knee_angle:.1f}")
+            
+            # Check if we're back in the up position
+            elif avg_knee_angle > self.up_threshold:
+                # If we were in down position and reached minimum depth, count a rep
+                if self.is_down_position and self.min_depth_reached:
+                    self.rep_count += 1
+                    print(f"Rep {self.rep_count} counted! knee_angle={avg_knee_angle:.1f}")
+                    self.is_down_position = False
+                    self.min_depth_reached = False
+                    feedback.append({
+                        "type": "good",
+                        "message": f"Rep {self.rep_count} complete! ✓"
+                    })
+                elif self.is_down_position:
+                    # Just came up but didn't reach minimum depth - reset
+                    self.is_down_position = False
+                    self.min_depth_reached = False
+                # If already in up position, ensure states are reset
+                else:
+                    self.is_down_position = False
+                    self.min_depth_reached = False
+            
+            self.last_knee_angle = avg_knee_angle
             
             # Check squat depth
             if avg_knee_angle > 160:
@@ -243,27 +295,56 @@ class PoseDetector:
             
             height, width, _ = frame.shape
             
-            # Auto-detect exercise type if needed
-            if exercise_type == "auto":
-                exercise_type = self.detect_exercise_type(results.pose_landmarks, width, height)
+            # Log exercise type on first frame
+            if not hasattr(self, 'exercise_type_logged'):
+                print(f"[Pose Detector] Processing frames with exercise_type: {exercise_type}")
+                self.exercise_type_logged = True
             
-            # Analyze based on exercise type
+            # Auto-detect exercise type if needed
+            detected_type = exercise_type
+            if exercise_type == "auto":
+                detected_type = self.detect_exercise_type(results.pose_landmarks, width, height)
+            
+            # Analyze based on exercise type - prioritize explicit type over detected
             if exercise_type == "squat":
+                # Explicitly analyze as squat - this will trigger rep counting
                 feedback = self.analyze_squat(results.pose_landmarks, width, height)
             elif exercise_type == "pushup":
+                # Explicitly analyze as pushup
                 feedback = self.analyze_pushup(results.pose_landmarks, width, height)
+            elif exercise_type == "auto":
+                # Auto mode - use detected type
+                if detected_type == "squat" or detected_type == "unknown":
+                    # Default to squat analysis for auto mode if upright or unknown
+                    feedback = self.analyze_squat(results.pose_landmarks, width, height)
+                elif detected_type == "pushup":
+                    feedback = self.analyze_pushup(results.pose_landmarks, width, height)
+                else:
+                    feedback.append({
+                        "type": "neutral",
+                        "message": "Position yourself for squat or push-up"
+                    })
             else:
                 feedback.append({
                     "type": "neutral",
                     "message": "Position yourself for squat or push-up"
                 })
+            
+            # Debug: print rep count periodically (every 30 frames or so)
+            if hasattr(self, '_frame_count'):
+                self._frame_count += 1
+            else:
+                self._frame_count = 0
+            
+            if self._frame_count % 30 == 0:
+                print(f"Frame {self._frame_count}: rep_count={self.rep_count}, exercise_type={exercise_type}, detected_type={detected_type}")
         else:
             feedback.append({
                 "type": "warning",
                 "message": "No pose detected - make sure your whole body is visible"
             })
         
-        return image_bgr, feedback
+        return image_bgr, feedback, self.rep_count
     
     def close(self):
         """Clean up resources"""
