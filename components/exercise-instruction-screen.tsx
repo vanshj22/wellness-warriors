@@ -37,7 +37,7 @@ export function ExerciseInstructionScreen({
   const videoUrl = exercise.videoUrl || videoUrls[videoId] || null;
 
   return (
-    <div className="w-full h-full flex flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50 pb-20 overflow-y-auto">
+    <div className="w-full h-full flex flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50 overflow-y-auto">
       {/* Header */}
       <div className="pt-16 px-6 pb-4">
         <Button
@@ -53,7 +53,7 @@ export function ExerciseInstructionScreen({
       </div>
 
       {/* Video Section */}
-      <div className="px-6 mb-6">
+      <div className="px-6 mb-4">
         <Card className="p-6 bg-white border-2 border-gray-200">
           <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
             <Play className="w-6 h-6 text-blue-600" />
@@ -103,7 +103,7 @@ export function ExerciseInstructionScreen({
       </div>
 
       {/* Instructions */}
-      <div className="px-6 mb-6">
+      <div className="px-6 mb-4">
         <Card className="p-6 bg-blue-50 border-2 border-blue-200">
           <h3 className="text-xl font-bold text-gray-900 mb-4">📋 Step-by-Step Instructions</h3>
           <ol className="space-y-3">
@@ -126,7 +126,7 @@ export function ExerciseInstructionScreen({
       </div>
 
       {/* Tips */}
-      <div className="px-6 mb-6">
+      <div className="px-6 mb-4">
         <Card className="p-6 bg-yellow-50 border-2 border-yellow-200">
           <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
             💡 Tips
@@ -152,8 +152,8 @@ export function ExerciseInstructionScreen({
         </Card>
       </div>
 
-      {/* Start Recording Button */}
-      <div className="px-6 pb-4 mt-auto">
+      {/* Start Recording Button - Sticky at bottom */}
+      <div className="sticky bottom-0 left-0 right-0 p-4 pb-6 bg-gradient-to-t from-white via-white/95 to-transparent z-50 mt-auto">
         <Button
           onClick={() => onStartRecording(exercise.id)}
           size="lg"

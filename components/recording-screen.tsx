@@ -235,7 +235,7 @@ export function RecordingScreen({ onBack, onComplete, exerciseType: propExercise
     }, 1000);
   };
 
-  const startRecording = () => {
+  const startRecording = useCallback(() => {
     if (!streamRef.current || !videoRef.current) return;
 
     chunksRef.current = [];
@@ -262,11 +262,14 @@ export function RecordingScreen({ onBack, onComplete, exerciseType: propExercise
 
     // Auto-stop after 60 seconds
     setTimeout(() => {
-      if (isRecording && mediaRecorderRef.current?.state === 'recording') {
-        stopRecording();
+      // Use ref to get current state value to avoid stale closure
+      if (mediaRecorderRef.current?.state === 'recording') {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+          mediaRecorderRef.current.stop();
+        }
       }
     }, 60000);
-  };
+  }, []);
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
@@ -283,19 +286,35 @@ export function RecordingScreen({ onBack, onComplete, exerciseType: propExercise
   };
 
   const handleRetake = () => {
+    // Stop any ongoing recording
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    
+    // Reset all state
     setShowPreview(false);
     setRecordedBlob(null);
+    setIsRecording(false);
+    setCountdown(null);
     chunksRef.current = [];
+    
+    // Clean up media recorder
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current = null;
+    }
+    
     // Rep count will reset automatically when recording starts again
   };
 
   // Handle countdown completion
   useEffect(() => {
-    if (countdown === null && !isRecording && !showPreview) {
+    // Only start recording if countdown was actually running (went from a number to null)
+    // Don't auto-start if countdown is null but we're not in a recording state
+    if (countdown === null && !isRecording && !showPreview && recordedBlob === null) {
       // Countdown finished, start recording
       startRecording();
     }
-  }, [countdown]);
+  }, [countdown, isRecording, showPreview, recordedBlob, startRecording]);
 
   return (
     <div className="w-full h-full flex flex-col bg-black relative overflow-hidden">
@@ -450,17 +469,19 @@ export function RecordingScreen({ onBack, onComplete, exerciseType: propExercise
               </div>
               <div className="flex gap-3">
                 <Button
-                  onClick={handleRetake}
+                  onClick={() => {
+                    handleRetake();
+                  }}
                   variant="outline"
                   size="lg"
-                  className="flex-1 h-14 text-lg font-semibold border-2 border-white/50 text-white hover:bg-white/20"
+                  className="flex-1 h-14 text-lg font-semibold border-2 border-white/80 text-white hover:bg-white/30 hover:border-white bg-white/10 backdrop-blur-sm"
                 >
                   Record Again
                 </Button>
                 <Button
                   onClick={handleSave}
                   size="lg"
-                  className="flex-1 h-14 text-lg font-semibold bg-gradient-to-r from-green-600 to-emerald-600"
+                  className="flex-1 h-14 text-lg font-semibold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
                 >
                   Save Video
                 </Button>

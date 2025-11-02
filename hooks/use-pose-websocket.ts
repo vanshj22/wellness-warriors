@@ -26,6 +26,8 @@ export function usePoseWebSocket(enabled: boolean, exerciseType: string = "auto"
   const frameQueueRef = useRef<string[]>([]);
   const processingRef = useRef(false);
   const exerciseTypeRef = useRef(exerciseType);
+  const lastFeedbackUpdateRef = useRef<number>(0);
+  const pendingFeedbackRef = useRef<PoseFeedback[] | null>(null);
   
   // Keep exerciseType ref updated
   useEffect(() => {
@@ -38,7 +40,9 @@ export function usePoseWebSocket(enabled: boolean, exerciseType: string = "auto"
     }
 
     try {
-      const ws = new WebSocket("ws://localhost:8000/ws/pose");
+      const wsUrl = "ws://localhost:8000/ws/pose";
+      console.log(`Attempting WebSocket connection to: ${wsUrl}`);
+      const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
         console.log("WebSocket connected");
@@ -51,16 +55,26 @@ export function usePoseWebSocket(enabled: boolean, exerciseType: string = "auto"
           const data: PoseResponse = JSON.parse(event.data);
 
           if (data.type === "feedback" && data.feedback) {
-            setFeedback(data.feedback);
+            // Throttle feedback updates to once per second (1000ms)
+            const now = Date.now();
+            pendingFeedbackRef.current = data.feedback;
+            
+            if (now - lastFeedbackUpdateRef.current >= 1000) {
+              setFeedback(data.feedback);
+              lastFeedbackUpdateRef.current = now;
+              pendingFeedbackRef.current = null;
+            }
+            
+            // Always update frame (visual feedback can be fast)
             if (data.annotated_frame) {
               // Use requestAnimationFrame to update frame smoothly
               requestAnimationFrame(() => {
                 setAnnotatedFrame(data.annotated_frame || null);
               });
             }
+            
+            // Always update rep count immediately (important for counting)
             if (data.rep_count !== undefined) {
-              // Always update rep count, even if it's the same value
-              // This ensures the UI stays in sync
               setRepCount(prevCount => {
                 if (data.rep_count !== undefined && data.rep_count !== prevCount) {
                   console.log(`Rep count updated: ${prevCount} -> ${data.rep_count}`);
@@ -111,8 +125,18 @@ export function usePoseWebSocket(enabled: boolean, exerciseType: string = "auto"
       };
 
       ws.onerror = (event) => {
+        // WebSocket error events often don't have detailed info
+        // Log additional connection details
         console.error("WebSocket error:", event);
-        setError("Connection error - is the backend running?");
+        console.error("WebSocket readyState:", ws.readyState);
+        console.error("WebSocket URL:", ws.url);
+        
+        // Provide more helpful error message
+        const errorMessage = ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING
+          ? "Connection closed - is the backend running on port 8000?"
+          : "Connection error - check if backend is running: python backend/main.py";
+        
+        setError(errorMessage);
         setIsConnected(false);
       };
 
@@ -133,7 +157,10 @@ export function usePoseWebSocket(enabled: boolean, exerciseType: string = "auto"
       wsRef.current = ws;
     } catch (err) {
       console.error("Failed to create WebSocket:", err);
-      setError("Failed to connect to pose detection service");
+      const errorMessage = err instanceof Error 
+        ? `Failed to connect: ${err.message}` 
+        : "Failed to connect to pose detection service. Make sure the backend is running on port 8000.";
+      setError(errorMessage);
     }
   }, [enabled]);
 
@@ -203,6 +230,21 @@ export function usePoseWebSocket(enabled: boolean, exerciseType: string = "auto"
       disconnect();
     };
   }, [enabled, connect, disconnect]);
+
+  // Update pending feedback at 1 second intervals
+  useEffect(() => {
+    if (!enabled) return;
+
+    const interval = setInterval(() => {
+      if (pendingFeedbackRef.current) {
+        setFeedback(pendingFeedbackRef.current);
+        lastFeedbackUpdateRef.current = Date.now();
+        pendingFeedbackRef.current = null;
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [enabled]);
 
   return {
     feedback,

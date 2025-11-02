@@ -19,6 +19,7 @@ import {
   VolumeUp,
   TrendingUp,
   Chat,
+  Person,
 } from "@mui/icons-material";
 import { useNarration } from "@/hooks/use-narration";
 
@@ -54,15 +55,6 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
         gradient: "linear-gradient(135deg, #2a6f97 0%, #468faf 100%)",
         onClick: () => onNavigate("plan"),
       },
-      {
-        id: "community",
-        title: "My Community",
-        description: "Meet others",
-        icon: People,
-        color: "success",
-        gradient: "linear-gradient(135deg, #61a5c2 0%, #89c2d9 100%)",
-        onClick: () => onNavigate("community"),
-      },
   ];
 
   return (
@@ -96,10 +88,56 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
         msOverflowStyle: "none", // IE and Edge
       } as React.CSSProperties}
     >
-      <Container maxWidth="sm" sx={{ py: 4, position: "relative", zIndex: 1 }}>
+      <Container maxWidth="sm" sx={{ py: { xs: 2, sm: 4 }, px: { xs: 2, sm: 3 }, position: "relative", zIndex: 1 }}>
         {/* Header */}
         <Fade in timeout={600}>
-          <Box sx={{ mb: 4, textAlign: "center" }}>
+          <Box sx={{ mb: 4, textAlign: "center", position: "relative" }}>
+            <IconButton
+              onClick={() => onNavigate("profile")}
+              sx={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                color: "white",
+                backgroundColor: "rgba(255,255,255,0.15)",
+                backdropFilter: "blur(10px)",
+                border: "1.5px solid rgba(255,255,255,0.3)",
+                "&:hover": {
+                  backgroundColor: "rgba(255,255,255,0.25)",
+                  borderColor: "rgba(255,255,255,0.5)",
+                  transform: "scale(1.05)",
+                },
+                transition: "all 0.3s ease",
+              }}
+              aria-label="My Profile"
+              title="My Profile"
+              size="small"
+            >
+              <Person sx={{ fontSize: 20 }} />
+            </IconButton>
+            <IconButton
+              onClick={narrateScreen}
+              sx={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                color: "white",
+                backgroundColor: "rgba(255,255,255,0.15)",
+                backdropFilter: "blur(10px)",
+                border: "1.5px solid rgba(255,255,255,0.3)",
+                "&:hover": {
+                  backgroundColor: "rgba(255,255,255,0.25)",
+                  borderColor: "rgba(255,255,255,0.5)",
+                  transform: "scale(1.05)",
+                },
+                transition: "all 0.3s ease",
+              }}
+              aria-label="Narrate screen content"
+              title="Narrate screen content"
+              size="small"
+            >
+              <VolumeUp sx={{ fontSize: 20 }} />
+            </IconButton>
             <Typography
               variant="h3"
               sx={{
@@ -158,42 +196,6 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
           </Box>
         </Fade>
 
-        {/* Narrate Button */}
-        <Fade in timeout={1000}>
-          <Box sx={{ mb: 4 }}>
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Button
-                onClick={narrateScreen}
-                fullWidth
-                variant="outlined"
-                size="large"
-                sx={{
-                  borderColor: "rgba(255,255,255,0.4)",
-                  color: "white",
-                  py: 2,
-                  borderWidth: 2.5,
-                  borderRadius: 3,
-                  backdropFilter: "blur(10px)",
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                  textTransform: "none",
-                  fontWeight: 600,
-                  letterSpacing: "0.02em",
-                  "&:hover": {
-                    borderColor: "rgba(255,255,255,0.6)",
-                    backgroundColor: "rgba(255,255,255,0.15)",
-                    borderWidth: 2.5,
-                  },
-                }}
-                startIcon={<VolumeUp sx={{ fontSize: 22 }} />}
-              >
-                Narrate
-              </Button>
-            </motion.div>
-          </Box>
-        </Fade>
 
         {/* Main Options Grid */}
         <Grid container spacing={3} sx={{ mb: 3 }}>

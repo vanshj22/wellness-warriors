@@ -214,17 +214,38 @@ export function ExercisesScreen({
       <Container maxWidth="sm" sx={{ py: 4 }}>
         {/* Header */}
         <Fade in timeout={600}>
-          <Box sx={{ mb: 3 }}>
-            <Button
-              onClick={onBack}
-              sx={{
-                color: "white",
-                mb: 2,
-                "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
-              }}
-            >
-              ← Back
-            </Button>
+          <Box sx={{ mb: 3, position: "relative" }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+              <Button
+                onClick={onBack}
+                sx={{
+                  color: "white",
+                  "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+                }}
+              >
+                ← Back
+              </Button>
+              <IconButton
+                onClick={narrateScreen}
+                sx={{
+                  color: "white",
+                  backgroundColor: "rgba(255,255,255,0.15)",
+                  backdropFilter: "blur(10px)",
+                  border: "1.5px solid rgba(255,255,255,0.3)",
+                  "&:hover": {
+                    backgroundColor: "rgba(255,255,255,0.25)",
+                    borderColor: "rgba(255,255,255,0.5)",
+                    transform: "scale(1.05)",
+                  },
+                  transition: "all 0.3s ease",
+                }}
+                aria-label="Narrate screen content"
+                title="Narrate screen content"
+                size="small"
+              >
+                <VolumeUp sx={{ fontSize: 20 }} />
+              </IconButton>
+            </Box>
             <Typography
               variant="h3"
               sx={{
@@ -429,29 +450,6 @@ export function ExercisesScreen({
           </Box>
         </Box>
 
-        {/* Narrate Button */}
-        <Fade in timeout={1500}>
-          <Button
-            onClick={narrateScreen}
-            fullWidth
-            variant="outlined"
-            size="large"
-            sx={{
-              borderColor: "rgba(255,255,255,0.3)",
-              color: "white",
-              py: 1.5,
-              borderWidth: 2,
-              "&:hover": {
-                borderColor: "rgba(255,255,255,0.5)",
-                backgroundColor: "rgba(255,255,255,0.1)",
-                borderWidth: 2,
-              },
-            }}
-            startIcon={<VolumeUp />}
-          >
-            Narrate
-          </Button>
-        </Fade>
       </Container>
     </Box>
   );

@@ -160,7 +160,7 @@ export default function Home() {
           } else {
             handleNavigate(screen);
           }
-        }} />;
+        }} onLogout={handleLogout} />;
       default:
         return <HomeScreen onNavigate={handleNavigate} />;
     }
@@ -209,16 +209,18 @@ export default function Home() {
   // Show patient app (existing functionality)
   return (
     <PhoneFrame>
-      {showWelcome ? (
-        <WelcomeScreen onComplete={() => setShowWelcome(false)} />
-      ) : (
-        <>
-          {renderScreen()}
-          {!showRecording && !showFeedback && !selectedExercise && ['home', 'help', 'profile'].includes(currentScreen) && (
+      <div className="w-full h-full">
+        {showWelcome ? (
+          <WelcomeScreen onComplete={() => setShowWelcome(false)} />
+        ) : (
+          <>
+            {renderScreen()}
+          {!showRecording && !showFeedback && !selectedExercise && ['home', 'community', 'help'].includes(currentScreen) && (
             <BottomNav activeTab={currentScreen} onNavigate={handleNavigate} />
           )}
-        </>
-      )}
+          </>
+        )}
+      </div>
     </PhoneFrame>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 import { Box, BottomNavigation, BottomNavigationAction, Paper } from "@mui/material";
-import { Home, Help, Person } from "@mui/icons-material";
+import { Home, Help, Groups } from "@mui/icons-material";
 import { motion } from "framer-motion";
 
 interface BottomNavProps {
@@ -11,8 +11,8 @@ interface BottomNavProps {
 export function BottomNav({ activeTab, onNavigate }: BottomNavProps) {
   const tabs = [
     { id: "home", label: "Home", icon: Home },
+    { id: "community", label: "Community", icon: Groups },
     { id: "help", label: "Help", icon: Help },
-    { id: "profile", label: "Profile", icon: Person },
   ];
 
   return (
@@ -36,11 +36,11 @@ export function BottomNav({ activeTab, onNavigate }: BottomNavProps) {
         onChange={(_, newValue) => onNavigate(newValue)}
         sx={{
           backgroundColor: "transparent",
-          height: 70,
+          height: { xs: 65, sm: 70 },
           "& .MuiBottomNavigationAction-root": {
             color: "text.secondary",
-            minWidth: 60,
-            padding: "8px 12px",
+            minWidth: { xs: 50, sm: 60 },
+            padding: { xs: "6px 8px", sm: "8px 12px" },
             transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             "&.Mui-selected": {
               color: "primary.main",
@@ -48,8 +48,14 @@ export function BottomNav({ activeTab, onNavigate }: BottomNavProps) {
               transform: "translateY(-2px)",
             },
             "& .MuiSvgIcon-root": {
-              fontSize: "1.75rem",
+              fontSize: { xs: "1.5rem", sm: "1.75rem" },
               transition: "all 0.3s ease",
+            },
+            "& .MuiBottomNavigationAction-label": {
+              fontSize: { xs: "0.7rem", sm: "0.75rem" },
+              "&.Mui-selected": {
+                fontSize: { xs: "0.7rem", sm: "0.75rem" },
+              },
             },
             "&:hover": {
               backgroundColor: "rgba(1, 42, 74, 0.08)",

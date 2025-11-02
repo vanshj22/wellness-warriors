@@ -22,9 +22,10 @@ import {
 interface ProfileScreenProps {
   onBack: () => void;
   onNavigate?: (screen: string) => void;
+  onLogout?: () => void;
 }
 
-export function ProfileScreen({ onBack, onNavigate }: ProfileScreenProps) {
+export function ProfileScreen({ onBack, onNavigate, onLogout }: ProfileScreenProps) {
   const profileOptions = [
     {
       title: "Weekly Feedback",
@@ -54,7 +55,7 @@ export function ProfileScreen({ onBack, onNavigate }: ProfileScreenProps) {
       title: "Sign Out",
       icon: Logout,
       gradient: "linear-gradient(135deg, #2a6f97 0%, #014f86 100%)",
-      action: null,
+      action: "logout",
     },
   ];
 
@@ -185,6 +186,8 @@ export function ProfileScreen({ onBack, onNavigate }: ProfileScreenProps) {
                   onClick={() => {
                     if (option.action === "feedback" && onNavigate) {
                       onNavigate("feedback");
+                    } else if (option.action === "logout" && onLogout) {
+                      onLogout();
                     }
                   }}
                   sx={{
